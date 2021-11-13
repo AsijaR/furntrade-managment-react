@@ -1,24 +1,15 @@
-import logo from './logo.svg';
 import './App.css';
+import MainLayoutPage from "./pages/MainLayoutPage";
 
 function App() {
+  const pages = {
+    1: <div >Option effeef1</div>,
+    2: <div >efefefef 2</div>,
+    3: <div >efefefe 3</div>,
+    4: <div >Ofefefefeption 4</div>
+  };
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <MainLayoutPage></MainLayoutPage>
   );
 }
 
