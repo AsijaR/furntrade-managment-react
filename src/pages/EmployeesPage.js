@@ -1,18 +1,16 @@
 import React, {Component} from 'react';
 import {Button, Layout, Popconfirm, Space, Table} from "antd";
-import API from '../server-apis/api';
-import {Content} from "antd/es/layout/layout";
-import {productDataColumns} from "../tableColumnsData/productDataColumns";
-import EditableTableCell from "../components/EditableTableCell";
-import EditableTableRow, {EditableContext} from "../components/EditableTableRow";
 import {Link} from "react-router-dom";
+import {Content} from "antd/es/layout/layout";
 import Search from "antd/es/input/Search";
-const { Column } = Table;
+import EditableTableRow, {EditableContext} from "../components/EditableTableRow";
+import EditableTableCell from "../components/EditableTableCell";
+import API from "../server-apis/api";
+import {employeesDataColumns} from "../tableColumnsData/employeesDataColumns";
 
-class ProductsPage extends Component {
+class EmployeesPage extends Component {
     constructor(props) {
         super(props);
-        this.onSearch = this.onSearch.bind(this);
     }
     state = {
         data: [],
@@ -25,7 +23,7 @@ class ProductsPage extends Component {
         errorMessage:""
     };
     columns = [
-        ...productDataColumns,
+        ...employeesDataColumns,
         {
             title: "Actions",
             dataIndex: "actions",
@@ -56,7 +54,6 @@ class ProductsPage extends Component {
         }
     ];
 
-
     isEditing = record => {
         return record.id === this.state.editingKey;
     };
@@ -68,23 +65,21 @@ class ProductsPage extends Component {
     cancel = () => {
         this.setState({ editingKey: "" });
     };
-
     componentDidMount() {
         this.setState({ loading: true });
-        API.get(`products`)
+        API.get(`employees`)
             .then(res => {
                 // console.log(res.data._embedded.productList);
-                const products = res.data._embedded.productList;
-                this.setState({loading: false,data:products });
+                const employees = res.data._embedded.appUserList;
+                this.setState({loading: false,data:employees });
             })
     }
-
     async remove(id) {
-        API.delete(`/products/${id}`)
-        .then(() => {
-            let updatedProducts = [...this.state.data].filter(i => i.id !== id);
-            this.setState({data: updatedProducts});
-        });
+        API.delete(`/employees/${id}`)
+            .then(() => {
+                let updatedProducts = [...this.state.data].filter(i => i.id !== id);
+                this.setState({data: updatedProducts});
+            });
     }
 
     hasWhiteSpace(s) {
@@ -102,26 +97,13 @@ class ProductsPage extends Component {
                 ...item,
                 ...row
             });
-            const response = API.put(`/products/update/${id}`, row)
+            const response = API.put(`/employees/update/1${id}`, row)
                 .then(response => this.setState({ data: newData, editingKey: "" }))
                 .catch(error => {
                     this.setState({ errorMessage: error.message });
                     console.error('There was an error!', error);
                 });
         });
-    }
-    onSearch (value){
-        this.setState({ loading: true });
-        if(value===""||this.hasWhiteSpace(value))
-            this.componentDidMount();
-        else{
-        API.get(`products/search/`, { params: { productName: value } })
-            .then(res => {
-                // console.log(res.data._embedded.productList);
-                const products = res.data._embedded.productList;
-                this.setState({loading: false,data:products });
-            });
-        }
     }
     render() {
         const components = {
@@ -176,4 +158,4 @@ class ProductsPage extends Component {
     }
 }
 
-export default ProductsPage;
+export default EmployeesPage;

@@ -5,6 +5,7 @@ import {Content} from "antd/es/layout/layout";
 import EditableTableRow, {EditableContext} from "../components/EditableTableRow";
 import {customersDataColumns} from "../tableColumnsData/customersDataColumns";
 import EditableTableCell from "../components/EditableTableCell";
+import {Link} from "react-router-dom";
 const { Column } = Table;
 
 class CustomersPage extends Component {
@@ -126,8 +127,10 @@ class CustomersPage extends Component {
         return (
             <Layout>
                 <div >
-                    <Button style={{float:"right", background: "#0AC035",marginBottom:"1em", marginTop:"1em" }} type="primary">New customer</Button>
-                </div>
+                    <Link to="/add-customer">
+                        <Button style={{float:"right", background: "#0AC035",marginBottom:"1em", marginTop:"1em" }} type="primary">New customer</Button>
+                    </Link>
+                    </div>
                 <Content>
                     <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>
                 </Content>

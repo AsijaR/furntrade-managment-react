@@ -8,7 +8,10 @@ import {Link, Routes} from "react-router-dom";
 import Sider from "antd/es/layout/Sider";
 import {Menu} from "antd";
 import {  BrowserRouter as Router,  Route} from "react-router-dom";
-import {FaBuilding, FaCouch, IoDocumentText, IoMdSettings} from "react-icons/all";
+import {FaBuilding, FaCouch, FaUsers, IoDocumentText, IoMdSettings} from "react-icons/all";
+import AddProductPage from "./AddProductPage";
+import AddCustomerPage from "./AddCustomerPage";
+import EmployeesPage from "./EmployeesPage";
 class MainLayoutPage extends Component {
 
     state = {
@@ -42,7 +45,12 @@ class MainLayoutPage extends Component {
                                     <span>Orders</span>
                                 </Link>
                              </Menu.Item>
-                            <Menu.Item key="4" icon={<IoMdSettings/>}  >
+                            <Menu.Item key="4" icon={<FaUsers/>}>
+                                <Link to="/employees">
+                                    <span>Employees</span>
+                                </Link>
+                            </Menu.Item>
+                            <Menu.Item key="5" icon={<IoMdSettings/>}  >
                                 <Link to="/settings"/>
                                 <span>Settings</span>
                             </Menu.Item>
@@ -53,8 +61,11 @@ class MainLayoutPage extends Component {
                             <div>
                                 <Routes>
                                     <Route exact path="/"  element={<ProductsPage />} />
-                                    <Route exact path="/customers"  element={<CustomersPage />} />
+                                    <Route path="/add-product"  element={<AddProductPage />} />
+                                    <Route path="/customers"  element={<CustomersPage />} />
+                                    <Route path="/add-customer"  element={<AddCustomerPage />} />
                                     <Route path="/orders" element={  <OrdersPage/>}/>
+                                    <Route path="/employees" element={  <EmployeesPage/>}/>
                                     <Route path="/settings" element={  <SettingsPage/>}/>
                                 </Routes>
                             </div>
