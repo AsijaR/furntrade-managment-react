@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Button, Layout, Popconfirm, Space, Table} from "antd";
+import {Button, Layout, notification, Popconfirm, Space, Table} from "antd";
 import {Link} from "react-router-dom";
 import {Content} from "antd/es/layout/layout";
 import Search from "antd/es/input/Search";
@@ -7,11 +7,9 @@ import EditableTableRow, {EditableContext} from "../components/EditableTableRow"
 import EditableTableCell from "../components/EditableTableCell";
 import API from "../server-apis/api";
 import {employeesDataColumns} from "../tableColumnsData/employeesDataColumns";
+import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 
 class EmployeesPage extends Component {
-    constructor(props) {
-        super(props);
-    }
     state = {
         data: [],
         // pagination: {
@@ -35,15 +33,15 @@ class EmployeesPage extends Component {
                         {editable ? (
                             <span>
                                 <EditableContext.Consumer>
-                                  {form => (<a onClick={() => this.saveData(form, record.id)} style={{ marginRight: 8 }}>Save</a>)}
+                                  {form => (<a onClick={() => this.saveData(form, record.username)} style={{ marginRight: 8 }}>Save</a>)}
                                 </EditableContext.Consumer>
-                                <a onClick={()=>this.cancel}>Cancel</a>
+                                <a onClick={this.cancel}>Cancel</a>
                             </span>
                         ) : (
                             <Space size="middle">
-                                <a onClick={() => this.edit(record.id)}>Edit</a>
+                                <a onClick={() => this.edit(record.username)}>Edit</a>
                                 <Popconfirm title="Are you sure you want to delete this product?"
-                                            onConfirm={() => this.remove(record.id)}>
+                                            onConfirm={() => this.remove(record.username)}>
                                     <a style={{color:"red"}}>Delete</a>
                                 </Popconfirm>
                             </Space>
@@ -55,11 +53,11 @@ class EmployeesPage extends Component {
     ];
 
     isEditing = record => {
-        return record.id === this.state.editingKey;
+        return record.username === this.state.editingKey;
     };
 
-    edit(id) {
-        this.setState({ editingKey: id });
+    edit(username) {
+        this.setState({ editingKey: username });
     }
 
     cancel = () => {
@@ -67,44 +65,69 @@ class EmployeesPage extends Component {
     };
     componentDidMount() {
         this.setState({ loading: true });
-        API.get(`employees`)
+        const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
+        API.get(`users/all`,{ headers: { Authorization: token}})
             .then(res => {
                 // console.log(res.data._embedded.productList);
-                const employees = res.data._embedded.appUserList;
+                const employees = res.data._embedded.employeeInfoDtoList;
                 this.setState({loading: false,data:employees });
             })
     }
-    async remove(id) {
-        API.delete(`/employees/${id}`)
+    async remove(username) {
+        const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
+        API.delete(`/users/${username}`,{ headers: { Authorization: token}})
             .then(() => {
-                let updatedProducts = [...this.state.data].filter(i => i.id !== id);
+                let updatedProducts = [...this.state.data].filter(i => i.username !== username);
                 this.setState({data: updatedProducts});
-            });
+                this.successfullyAdded("Employee is deleted. It wont have any access to the website anymore.")
+            }).catch(()=>this.errorHappend("Failed to delete"));
     }
 
     hasWhiteSpace(s) {
         return /\s/g.test(s);
     }
-    saveData(form,id) {
+    saveData(form,username) {
         form.validateFields((error, row) => {
             if (error) {
                 return;
             }
             const newData = [...this.state.data];
-            const index = newData.findIndex(item => id === item.id);
+            const index = newData.findIndex(item => username === item.username);
             const item = newData[index];
             newData.splice(index, 1, {
                 ...item,
                 ...row
             });
-            const response = API.put(`/employees/update/1${id}`, row)
-                .then(response => this.setState({ data: newData, editingKey: "" }))
+            const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
+            const response = API.put(`/users/${username}/update`, row,{ headers: { Authorization: token}})
+                .then((response) => {
+                    this.setState({ data: newData, editingKey: "" });
+                    this.successfullyAdded("Empolyee info is updated")
+                })
                 .catch(error => {
                     this.setState({ errorMessage: error.message });
+                    this.errorHappend("Failed to save changes.")
                     console.error('There was an error!', error);
                 });
         });
     }
+    successfullyAdded = (message) => {
+        notification.info({
+            message: `Notification`,
+            description:message,
+            placement:"bottomRight",
+            icon: <CheckCircleFilled style={{ color: '#0AC035' }} />
+        });
+    };
+    errorHappend = (error) => {
+        notification.info({
+            message: `Notification`,
+            description:
+                `There was an error! ${error}`,
+            placement:"bottomRight",
+            icon: <InfoCircleFilled style={{ color: '#f53333' }} />
+        });
+    };
     render() {
         const components = {
             body: {
@@ -144,14 +167,14 @@ class EmployeesPage extends Component {
                 <div>
                     <Link to="/add-product">
                         <Button style={{float:"right", background: "#0AC035",marginBottom:"1em", marginTop:"1em" }}
-                                type="primary">New product</Button>
+                                type="primary">New emplyee</Button>
                     </Link>
                 </div>
                 <Content>
-                    <div style={{marginBottom:"1em"}}>
-                        <Search placeholder="Search products by name" onSearch={this.onSearch}  />
-                    </div>
-                    <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>
+                    {/*<div style={{marginBottom:"1em"}}>*/}
+                    {/*    <Search placeholder="Search products by name" onSearch={this.onSearch}  />*/}
+                    {/*</div>*/}
+                    <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="username" rowClassName="editable-row"/>
                 </Content>
             </Layout>
         );

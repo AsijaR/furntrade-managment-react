@@ -29,12 +29,5 @@ export const employeesDataColumns = [
         dataIndex: "email",
         key: "email",
         editable: true
-    },
-    {
-        title: "Role",
-        dataIndex: "role",
-        key: "role",
-        width: "10%",
-        editable: true
     }
 ];

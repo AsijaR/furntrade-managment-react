@@ -12,26 +12,30 @@ import {FaBuilding, FaCouch, FaUsers, IoDocumentText, IoMdSettings} from "react-
 import AddProductPage from "./AddProductPage";
 import AddCustomerPage from "./AddCustomerPage";
 import EmployeesPage from "./EmployeesPage";
+import authService from "../services/auth.service"
+
 class MainLayoutPage extends Component {
 
-    state = {
+    constructor() {
+        super();
+        this.state = {
         collapsed: false,
-    };
-
+        hasAdminRole:authService.getCurrentUser().isAdmin
+        };
+}
     onCollapse = collapsed => {
         console.log(collapsed);
         this.setState({ collapsed });
     };
 
     render() {
-        const { collapsed } = this.state;
         return (
             <Router>
                 <Layout style={{ minHeight: '100vh' }}>
-                    <Sider collapsible collapsed={collapsed} onCollapse={this.onCollapse}>
+                    <Sider collapsible collapsed={this.state.collapsed} onCollapse={this.onCollapse}>
                         <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
                             <Menu.Item key="1" icon={<FaCouch/>}>
-                                <Link to="/">
+                                <Link to="/products">
                                     <span>Products</span>
                                 </Link>
                             </Menu.Item>
@@ -45,11 +49,13 @@ class MainLayoutPage extends Component {
                                     <span>Orders</span>
                                 </Link>
                              </Menu.Item>
-                            <Menu.Item key="4" icon={<FaUsers/>}>
-                                <Link to="/employees">
-                                    <span>Employees</span>
-                                </Link>
-                            </Menu.Item>
+                            {this.state.hasAdminRole && (
+                                <Menu.Item key="4" icon={<FaUsers/>}>
+                                    <Link to="/employees">
+                                        <span>Employees</span>
+                                    </Link>
+                                </Menu.Item>)
+                            }
                             <Menu.Item key="5" icon={<IoMdSettings/>}  >
                                 <Link to="/settings"/>
                                 <span>Settings</span>
@@ -60,10 +66,11 @@ class MainLayoutPage extends Component {
                         <Content  style={{ margin: '0 16px' }}>
                             <div>
                                 <Routes>
-                                    <Route exact path="/"  element={<ProductsPage />} />
+                                    <Route exact path="/products"  element={<ProductsPage />} />
                                     <Route path="/add-product"  element={<AddProductPage />} />
                                     <Route path="/customers"  element={<CustomersPage />} />
-                                    <Route path="/add-customer"  element={<AddCustomerPage />} />
+                                    {this.state.hasAdminRole &&
+                                        ( <Route path="/add-customer"  element={<AddCustomerPage />} />)}
                                     <Route path="/orders" element={  <OrdersPage/>}/>
                                     <Route path="/employees" element={  <EmployeesPage/>}/>
                                     <Route path="/settings" element={  <SettingsPage/>}/>

@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Button, Layout, Popconfirm, Space, Table} from "antd";
+import {Button, Layout, notification, Popconfirm, Space, Table} from "antd";
 import API from '../server-apis/api';
 import {Content} from "antd/es/layout/layout";
 import {productDataColumns} from "../tableColumnsData/productDataColumns";
@@ -7,7 +7,7 @@ import EditableTableCell from "../components/EditableTableCell";
 import EditableTableRow, {EditableContext} from "../components/EditableTableRow";
 import {Link} from "react-router-dom";
 import Search from "antd/es/input/Search";
-const { Column } = Table;
+import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 
 class ProductsPage extends Component {
     constructor(props) {
@@ -39,7 +39,7 @@ class ProductsPage extends Component {
                                 <EditableContext.Consumer>
                                   {form => (<a onClick={() => this.saveData(form, record.id)} style={{ marginRight: 8 }}>Save</a>)}
                                 </EditableContext.Consumer>
-                                <a onClick={()=>this.cancel}>Cancel</a>
+                                <a onClick={this.cancel}>Cancel</a>
                             </span>
                         ) : (
                             <Space size="middle">
@@ -71,19 +71,24 @@ class ProductsPage extends Component {
 
     componentDidMount() {
         this.setState({ loading: true });
-        API.get(`products`)
+        const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
+        API.get(`products`,{ headers: { Authorization: token}})
             .then(res => {
                 // console.log(res.data._embedded.productList);
                 const products = res.data._embedded.productList;
                 this.setState({loading: false,data:products });
-            })
+            });
     }
 
     async remove(id) {
-        API.delete(`/products/${id}`)
+        const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
+        API.delete(`/products/${id}`,{ headers: { Authorization: token}})
         .then(() => {
             let updatedProducts = [...this.state.data].filter(i => i.id !== id);
             this.setState({data: updatedProducts});
+            this.successfullyAdded("Product is deleted");
+        }).catch((error)=>{
+            this.errorHappend("");
         });
     }
 
@@ -102,10 +107,16 @@ class ProductsPage extends Component {
                 ...item,
                 ...row
             });
-            const response = API.put(`/products/update/${id}`, row)
-                .then(response => this.setState({ data: newData, editingKey: "" }))
+            const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
+            const response = API.put(`/products/update/${id}`, row,{headers: { Authorization: token}})
+                .then((response )=>
+                {
+                    this.setState({ data: newData, editingKey: "" });
+                    this.successfullyAdded("Product is updated");
+                })
                 .catch(error => {
                     this.setState({ errorMessage: error.message });
+                    this.errorHappend("");
                     console.error('There was an error!', error);
                 });
         });
@@ -115,14 +126,32 @@ class ProductsPage extends Component {
         if(value===""||this.hasWhiteSpace(value))
             this.componentDidMount();
         else{
-        API.get(`products/search/`, { params: { productName: value } })
-            .then(res => {
-                // console.log(res.data._embedded.productList);
-                const products = res.data._embedded.productList;
-                this.setState({loading: false,data:products });
-            });
+            const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
+            API.get(`products/search/`, { params: { productName: value },headers: { Authorization: token}})
+                .then(res => {
+                    // console.log(res.data._embedded.productList);
+                    const products = res.data._embedded.productList;
+                    this.setState({loading: false,data:products });
+                });
         }
     }
+    successfullyAdded = (message) => {
+        notification.info({
+            message: `Notification`,
+            description:message,
+            placement:"bottomRight",
+            icon: <CheckCircleFilled style={{ color: '#0AC035' }} />
+        });
+    };
+    errorHappend = (error) => {
+        notification.info({
+            message: `Notification`,
+            description:
+                `There was an error! ${error}`,
+            placement:"bottomRight",
+            icon: <InfoCircleFilled style={{ color: '#f53333' }} />
+        });
+    };
     render() {
         const components = {
             body: {

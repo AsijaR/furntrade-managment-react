@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import API from "../server-apis/api";
-import {Button, Card, Col, Divider, Form, Input, InputNumber, Layout, notification, Row, Space} from "antd";
+import {Button, Card, Form, Input, InputNumber, Layout, notification, Space} from "antd";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import {Content} from "antd/es/layout/layout";
 
@@ -10,7 +10,8 @@ class AddCustomerPage extends Component {
         this.onFinish = this.onFinish.bind(this);
     }
     onFinish = (values) => {
-       API.post(`/customers/add`,values)
+        const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
+       API.post(`/customers/add`,values,{ headers: { Authorization: token}})
             .then((res) => {
                 this.successfullyAdded();
             })
