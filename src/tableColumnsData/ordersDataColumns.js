@@ -1,16 +1,20 @@
-export const customersDataColumns = [
+import {Tag} from "antd";
+
+export const ordersDataColumns = [
     {
         title: "Id",
         dataIndex: "id",
         key: "id",
         width: "6%",
-        editable: false
+        editable: false,
+        fixed: 'left'
     },
     {
         title: "Customer",
         dataIndex: "customerName",
         key: "customerName",
-        editable: false
+        editable: false,
+        fixed: 'left'
     },
     {
         title: "Shippment Date",
@@ -23,7 +27,22 @@ export const customersDataColumns = [
         title: "Status",
         dataIndex: "status",
         key: "status",
-        editable: false
+        editable: false,
+        // render: status => (
+        //     <>
+        //         {status.map(stat => {
+        //             let color = stat.length > 5 ? 'geekblue' : 'green';
+        //             if (stat === 'WAITING') {
+        //                 color = 'volcano';
+        //             }
+        //             return (
+        //                 <Tag color={color} key={stat}>
+        //                     {stat.toUpperCase()}
+        //                 </Tag>
+        //             );
+        //         })}
+        //     </>
+        // ),
     },
     {
         title: "Note 1",
