@@ -2,10 +2,10 @@ import React, {Component} from 'react';
 import {Button, Col, Form, Input, notification, Row} from "antd";
 import AuthService from "../services/auth.service";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
-
 class LoginPage extends Component{
     constructor(props) {
         super(props);
+        //window.location.pathname="efefe";
         this.onFinish = this.onFinish.bind(this);
         this.onChangeUsername = this.onChangeUsername.bind(this);
         this.onChangePassword = this.onChangePassword.bind(this);

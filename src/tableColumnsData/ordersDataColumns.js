@@ -1,4 +1,20 @@
-export const customersDataColumns = [
+import moment from 'moment';
+import {Select} from "antd";
+import API from "../server-apis/api";
+
+function changeOrderStatus(value, id){
+    console.log("value>>>",value);
+    console.log("id>>>",id);
+
+    // const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
+    // API.patch(`orders/change-status/`,id,{ headers: { Authorization: token}})
+    //     .then(res => {
+    //         // console.log(res.data._embedded.productList);
+    //         const orders = res.data._embedded.ordersDtoList;
+    //         this.setState({loading: false,data:orders });
+    //     });
+}
+export const ordersDataColumns = [
     {
         title: "Id",
         dataIndex: "id",
@@ -17,25 +33,22 @@ export const customersDataColumns = [
         dataIndex: "shippmentDate",
         key: "shippmentDate",
         width: "10%",
-        editable: false
-    },
-    {
-        title: "Status",
-        dataIndex: "status",
-        key: "status",
-        editable: false
+        editable: false,
+       render: (shippmentDate) => { return (<p>{moment(shippmentDate).format("DD-MM-YYYY")}</p>)}
     },
     {
         title: "Note 1",
         dataIndex: "note1",
         key: "note1",
-        editable: false
+        editable: false,
+        ellipsis: true,
     },
     {
         title: "Note 2",
         dataIndex: "note2",
         key: "note2",
-        editable: false
+        editable: false,
+        ellipsis: true,
     },
     {
         title: "Contact Person",

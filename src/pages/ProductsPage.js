@@ -130,7 +130,7 @@ class ProductsPage extends Component {
             API.get(`products/search/`, { params: { productName: value },headers: { Authorization: token}})
                 .then(res => {
                     // console.log(res.data._embedded.productList);
-                    const products = res.data._embedded.productList;
+                    const products = res.data.productList;
                     this.setState({loading: false,data:products });
                 });
         }

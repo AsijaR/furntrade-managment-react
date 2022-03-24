@@ -11,7 +11,11 @@ import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 
 class CustomersPage extends Component {
     getUserRole(){
-        return authService.getCurrentUser();
+        if(authService.getCurrentUser()===null)
+        {
+            window.location.reload(false);
+        }
+        else return authService.getCurrentUser();
     }
     state = {
         data: [],
