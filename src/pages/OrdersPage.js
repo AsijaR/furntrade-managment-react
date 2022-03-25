@@ -59,7 +59,10 @@ class OrdersPage extends Component {
                             </span>
                         ) : (
                             <Space size="middle">
-                                <a onClick={() => this.edit(record.id)}>Edit</a>
+                                {/*<a onClick={() => this.edit(record.id)}>Edit</a>*/}
+                                    <Link to={`${record.id}`}>
+                                        <span>Edit</span>
+                                    </Link>
                                 <Popconfirm title="Are you sure you want to delete this order?"
                                             onConfirm={() => this.remove(record.id)}>
                                     <a style={{color:"red"}}>Delete</a>

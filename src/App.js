@@ -7,12 +7,12 @@ function App() {
 
   if(authService.getCurrentUser()===null)
   {
-    window.history.pushState({}, "Login page", "login")
+   // window.history.pushState({}, "Login page", "login")
     return <LoginPage/>
 
   }
   else {
-    window.history.pushState({}, "Dashboard", "/products")
+   // window.history.pushState({}, "Dashboard", "/products")
     return <MainLayoutPage></MainLayoutPage>;
   }
 }

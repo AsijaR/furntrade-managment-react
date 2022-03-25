@@ -14,12 +14,28 @@ function changeOrderStatus(value, id){
     //         this.setState({loading: false,data:orders });
     //     });
 }
+function orderDetails(orderId){
+    console.log("value>>>",orderId);
+    const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
+    const response = API.get(`/orders/${orderId}`,{headers: { Authorization: token}})
+        .then((response )=>
+        {
+            const orderDetails = response.data;
+            console.log(orderDetails)
+        })
+        .catch(error => {
+         //   this.setState({ errorMessage: error.message });
+        //    this.errorHappend("");
+            console.error('There was an error!', error);
+        });
+}
 export const ordersDataColumns = [
     {
         title: "Id",
         dataIndex: "id",
         key: "id",
         width: "6%",
+        render: orderId => <a onClick={() => orderDetails(orderId)}>{orderId}</a>,
         editable: false
     },
     {

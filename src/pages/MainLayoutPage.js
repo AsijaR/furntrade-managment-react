@@ -14,6 +14,7 @@ import EmployeesPage from "./EmployeesPage";
 import authService from "../services/auth.service";
 import LoginPage from "./LoginPage";
 import { useHistory } from "react-router-dom";
+import OrderDetails from "./OrderDetails";
 
 
 class MainLayoutPage extends Component {
@@ -98,6 +99,8 @@ class MainLayoutPage extends Component {
                                         <Route path="/orders" element={  <OrdersPage/>}/>
                                         <Route path="/employees" element={  <EmployeesPage/>}/>
                                         <Route path="/settings" element={  <SettingsPage/>}/>
+                                        <Route exact path="/orders/:id" element={  <OrderDetails/>}/>
+                                        <Route exact path="/login" element={  <LoginPage/>}/>
                                     </Routes>
                                 </div>
                             </Content>
