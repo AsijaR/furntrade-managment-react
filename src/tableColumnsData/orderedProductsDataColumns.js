@@ -37,6 +37,7 @@ export const orderedProductsDataColumns = [
         title: "Quantity",
         dataIndex: "quantity",
         key: "quantity",
+        width: "15%",
         editable: true
     }
 ];

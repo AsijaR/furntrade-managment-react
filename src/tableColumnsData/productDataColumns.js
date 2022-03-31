@@ -34,6 +34,7 @@ export const productDataColumns = [
         title: "Price",
         dataIndex: "price",
         key: "price",
+        className: 'column-money',
         editable: true
     }
 ];
