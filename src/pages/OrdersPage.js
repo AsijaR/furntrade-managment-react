@@ -1,7 +1,9 @@
 import React, {Component} from 'react';
 import {ordersDataColumns} from "../tableColumnsData/ordersDataColumns";
 import EditableTableRow, {EditableContext} from "../components/EditableTableRow";
-import {Badge, Button, Form, Layout, notification, Popconfirm, Select, Space, Table} from "antd";
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Badge, Button, Layout, notification, Popconfirm, Select, Space, Table } from "antd";
 import API from "../server-apis/api";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import EditableTableCell from "../components/EditableTableCell";

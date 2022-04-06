@@ -1,6 +1,8 @@
 import React, {Component} from 'react';
 import API from "../server-apis/api";
-import {Button, Card, Form, Input, InputNumber, Layout, notification, Space} from "antd";
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Button, Card, Input, InputNumber, Layout, notification, Space } from "antd";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import {Content} from "antd/es/layout/layout";
 

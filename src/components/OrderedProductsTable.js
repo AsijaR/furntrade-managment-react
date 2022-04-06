@@ -1,15 +1,22 @@
 import React, {Component} from 'react';
 import EditableTableRow, {EditableContext} from "./EditableTableRow";
 import EditableTableCell from "./EditableTableCell";
-import {Popconfirm, Space, Table} from "antd";
+import {notification, Popconfirm, Space, Table, Typography} from "antd";
 import {orderedProductsDataColumns} from "../tableColumnsData/orderedProductsDataColumns";
 import API from "../server-apis/api";
+import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 
 class OrderedProductsTable extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            data:this.props.products,
+            loading: false,
+            editingKey: "",
+            errorMessage:""
         };
+        this.isEditing= (record) => record.id === this.state.editingKey;
+        this.saveData=this.saveData.bind(this);
     }
     columns = [
         ...orderedProductsDataColumns,
@@ -18,50 +25,65 @@ class OrderedProductsTable extends Component {
             dataIndex: "actions",
             width: "10%",
             render: (text, record) => {
-                const editable = this.isEditing(record);
-                return (
-                    <div>
-                        {editable ? (
+               const editable = this.isEditing(record);
+                return editable ?(
                             <span>
                                 <EditableContext.Consumer>
-                                  {form => (<a onClick={() => this.saveData(form, record.id)} style={{ marginRight: 8 }}>Save</a>)}
+                                  {form => (<Typography.Link onClick={() => this.saveData(form, record.id)} style={{ marginRight: 8 }}>Save</Typography.Link>)}
                                 </EditableContext.Consumer>
-                                <a onClick={this.cancel}>Cancel</a>
+                                <Typography.Link onClick={this.cancel}>Cancel</Typography.Link>
                             </span>
                         ) : (
                             <Space size="middle">
-                                <a onClick={() => this.edit(record.id)}>Edit</a>
-                                <Popconfirm title="Are you sure you want to remove this product?"
-                                            onConfirm={() => this.remove(record.id)}>
-                                    <a style={{color:"red"}}>Remove</a>
+                                <Typography.Link onClick={() => this.edit(record)}>Edit</Typography.Link>
+                                <Popconfirm title="Are you sure you want to delete this customer?" onConfirm={() => this.remove(record.id)}>
+                                    <Typography.Link style={{color:"red"}}>Delete</Typography.Link>
                                 </Popconfirm>
                             </Space>
-                        )}
-                    </div>
-                );
+                        );
             }
         }
     ];
-    edit(id) {
-        this.setState({ editingKey: id });
+    // isEditing =(record) => {
+    //     console.log("u isEditing sam -> "+this.state.editingKey+" <-je nesto");
+    //     return record.id === this.state.editingKey;
+    // };
+    edit(record) {
+        console.log("u editovanje sam kliknula")
+        this.setState({ editingKey: record.id,});
     }
     cancel = () => {
-        this.setState({ editingKey: "" });
+        this.setState({ editingKey: ""});
     };
-    isEditing = record => {
-        return record.id === this.state.editingKey;
-    };
+
     async remove(id) {
-        console.log(id);
-        let updatedProducts= [...this.props.products].filter(i => i.id !== id);
-     //   this.setState({data: updatedProducts});
-        //this.state.data=updatedProducts;
-        console.log(this.state.data);
+        const params = new URLSearchParams();
+        params.append('quantity', 0);
+        API.patch(`orders/${this.props.orderId}/remove-product/${id}`,params,{ headers: { Authorization: this.props.token}})
+            .then(() => {
+                let updatedCustomers = [...this.state.data].filter(i => i.id !== id);
+                this.setState({data: updatedCustomers});
+                this.successfullyAdded("Product is deleted");
+            }).catch(()=>this.errorHappend("Failed to deleted"));
     }
-
+    successfullyAdded = (message) => {
+        notification.info({
+            message: `Notification`,
+            description:message,
+            placement:"bottomRight",
+            icon: <CheckCircleFilled style={{ color: '#0AC035' }} />
+        });
+    };
+    errorHappend = (error) => {
+        notification.info({
+            message: `Notification`,
+            description:
+                `There was an error! ${error}`,
+            placement:"bottomRight",
+            icon: <InfoCircleFilled style={{ color: '#f53333' }} />
+        });
+    };
     saveData(form,id) {
-
-        //this.props.products.quantity=
         form.validateFields((error, row) => {
             if (error) {
                 return;
@@ -75,6 +97,7 @@ class OrderedProductsTable extends Component {
             });
             console.log(newData)
         });
+        this.setState({ editingKey: "",isEditing:false });
 
     }
     render() {
@@ -111,11 +134,11 @@ class OrderedProductsTable extends Component {
                 }
             };
         });
-        const { data, loading } = this.state;
+        const { loading,data } = this.state;
         //console.log("ovoooo"+this.props.products)
         return (
             <div>
-                <Table components={components} bordered dataSource={this.props.products} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>
+                <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>
             </div>
         );
     }

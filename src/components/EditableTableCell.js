@@ -1,5 +1,7 @@
 import React, {Component} from 'react';
-import { Form,  Input, InputNumber, Select, DatePicker} from "antd";
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Input, InputNumber, Select, DatePicker } from "antd";
 import moment from "moment";
 import {EditableContext} from "./EditableTableRow";
 
