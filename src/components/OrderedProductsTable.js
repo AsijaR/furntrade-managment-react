@@ -110,7 +110,7 @@ class OrderedProductsTable extends Component {
                     this.errorHappend("Failed to save changes.")
                     console.error('There was an error!', error);
                 });
-            console.log(newData)
+       //     console.log(newData)
         });
         this.setState({ editingKey: "",isEditing:false });
 
@@ -149,7 +149,6 @@ class OrderedProductsTable extends Component {
             };
         });
         const { loading,data } = this.state;
-        //console.log("ovoooo"+this.props.products)
         return (
             <div>
                 <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>

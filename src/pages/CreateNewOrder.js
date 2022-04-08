@@ -1,8 +1,9 @@
 import React, {Component} from 'react';
-import {Button, Col, DatePicker, Divider, Form, Input, Modal, Row, Select, Space, Typography} from "antd";
+import {Button, Col, DatePicker, Divider, Form, Input, Modal, notification, Row, Select, Space, Typography} from "antd";
 import AddNewProductsToOrder from "../components/AddNewProductsToOrder";
 import OrderedProductsTable from "../components/OrderedProductsTable";
 import API from "../server-apis/api";
+import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 
 const { Text } = Typography;
 
@@ -65,14 +66,24 @@ class CreateNewOrder extends Component {
                 }
             )
     }
-    handler(order,newProduct) {
-        console.log("novo dodala",newProduct)
-
-        this.setState({
-         //   newOrderData:order,
-            products:  [...this.state.products,newProduct]
-        })
-        console.log("nova lista prod",this.state.products)
+    handler(newProduct) {
+        if(this.state.products.some(p=>p.id===newProduct.id)){
+            notification.info({
+                message: `Notification`,
+                description:
+                    `Product already exists in the list.`,
+                placement:"bottomRight",
+                icon: <InfoCircleFilled style={{ color: '#f53333' }} />
+            });
+            return;
+        }
+       else
+       {
+            this.setState({
+                //   newOrderData:order,
+                products:  [...this.state.products,newProduct]
+            })
+       }
     }
     showModal = () => {
         this.setState({
@@ -85,9 +96,55 @@ class CreateNewOrder extends Component {
         })
     };
     onFinish = (values) => {
-        console.log('Success:', values);
-        //ovde bi mogla da kreiram objekat koji mi treba request
-
+        const selectedCustomer=this.state.customers.find(({id})=>id===values.customer);
+        const customerName=selectedCustomer.fullName.split(",")[0];
+        const order={
+            customerName:customerName,
+            shippmentDate:values.shippmentDate,
+            note1:values.note1,
+            note2:values.note2,
+        }
+        var products=this.state.products.map((p)=>{
+            const product={
+                id: p.id,
+                color: p.color,
+                model: p.model,
+                name: p.name,
+                price: p.price,
+            }
+            const productInfo={
+                product:product,
+                quantity:p.quantity
+            }
+            return productInfo;
+        });
+        API.post(`/orders/add`,{order,products},{ headers: { Authorization: this.token}})
+            .then((res) => {
+                this.successfullyAdded("Order is successfully created!");
+                console.log(res);
+            })
+            .catch(error => {
+                // this.setState({ errorMessage: error.message });
+                this.errorHappend(error);
+                console.error('There was an error!', error);
+            });
+    };
+    successfullyAdded = (message) => {
+        notification.info({
+            message: `Notification`,
+            description:message,
+            placement:"bottomRight",
+            icon: <CheckCircleFilled style={{ color: '#0AC035' }} />
+        });
+    };
+    errorHappend = (error) => {
+        notification.info({
+            message: `Notification`,
+            description:
+                `There was an error! ${error}`,
+            placement:"bottomRight",
+            icon: <InfoCircleFilled style={{ color: '#f53333' }} />
+        });
     };
     onFinishFailed = (errorInfo) => {
         console.log('Failed:', errorInfo);
@@ -147,7 +204,7 @@ class CreateNewOrder extends Component {
                         <Col className="gutter-row" span={15}>
                             <div style={{ padding: '8px' }}>
                                 <h3>Ordered products</h3>
-                                <OrderedProductsTable products={products} isNewOrder={true} token={this.token}/>
+                                <OrderedProductsTable products={products} token={this.token}/>
                             </div>
                         </Col>
                     </Row>

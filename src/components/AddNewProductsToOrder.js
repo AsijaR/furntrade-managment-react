@@ -13,31 +13,45 @@ class AddNewProductsToOrder extends Component {
         this.onFinish=this.onFinish.bind(this);
     }
     onFinish = values => {
-        const params = new URLSearchParams();
-        params.append('quantity', values.quantity);
-        API.patch(`orders/${this.props.orderId}/add-product/${values.product}`,params,{ headers: { Authorization: this.props.token}})
-            .then((res) => {
-            //    const ordereProducts=res.data.orderedProducts;
-                let orderedProducts=res.data.orderedProducts.map((p)=>{
-                    return {
-                        id: p.product.id,
-                        color: p.product.color,
-                        model: p.product.model,
-                        name: p.product.name,
-                        price: p.product.price,
-                        quantity: p.quantity,
-                    }
+        if(!this.props.isNewOrder)
+        {
+            const params = new URLSearchParams();
+            params.append('quantity', values.quantity);
+            API.patch(`orders/${this.props.orderId}/add-product/${values.product}`,params,{ headers: { Authorization: this.props.token}})
+                .then((res) => {
+                    let orderedProducts=res.data.orderedProducts.map((p)=>{
+                        return {
+                            id: p.product.id,
+                            color: p.product.color,
+                            model: p.product.model,
+                            name: p.product.name,
+                            price: p.product.price,
+                            quantity: p.quantity,
+                        }
+                    })
+                    var addedProd=orderedProducts.slice(-1).pop();
+                    this.props.handler(res.data,addedProd);
+                    this.successfullyAdded("Product is successfully added to the order.");
                 })
-                var addedProd=orderedProducts.slice(-1).pop();
-                this.props.handler(res.data,addedProd);
-                this.successfullyAdded("Product is successfully added to the order.");
-            })
-            .catch(error => {
-                if(error.response.status===403)
-                    this.errorHappend("Product already exists in the order.");
-                else  this.errorHappend(error);// this.setState({ errorMessage: error.message });
-                console.error('There was an error!', error);
-            });
+                .catch(error => {
+                    if(error.response.status===403)
+                        this.errorHappend("Product already exists in the order.");
+                    else  this.errorHappend(error);// this.setState({ errorMessage: error.message });
+                    console.error('There was an error!', error);
+                });
+        }
+        else{
+            const newProd=this.state.data.find(({id})=>id===values.product);
+            const product = {
+                id: newProd.id,
+                color: newProd.color,
+                model: newProd.model,
+                name: newProd.name,
+                price: newProd.price,
+                quantity: values.quantity
+            };
+            this.props.handler(product);
+        }
     };
     async componentDidMount() {
         await API.get(`products`,{ headers: { Authorization: this.props.token}})

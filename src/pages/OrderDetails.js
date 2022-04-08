@@ -102,9 +102,6 @@ class OrderDetails extends Component {
                     })
                     this.setState({customers:fullNameArray,selectedCustomer:name});
                 },
-                // Note: it's important to handle errors here
-                // instead of a catch() block so that we don't swallow
-                // exceptions from actual bugs in components.
                 (error) => {
                     this.setState({
                         isLoaded: true,
@@ -153,13 +150,13 @@ class OrderDetails extends Component {
                     <Button type="default" onClick={this.showModal} style={{float:"right", marginRight:"4.5em"}} size="middle"> Add more products to the order</Button>
                     <Modal title="Add product to the order" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel}
                            footer={[<Button key="back" onClick={this.handleCancel}> Cancel </Button>]}>
-                        <AddNewProductsToOrder orderId={data.id} token={this.token} handler = {this.handler}/>
+                        <AddNewProductsToOrder orderId={data.id} token={this.token} handler = {this.handler} isNewOrder={false}/>
                     </Modal>
                     <Form name="basic"
                         initialValues={{
                             //mozda ovo popravi prikaz al nije bitno
                             customer:data.customer.name,
-                        //    shippmentDate:moment(this.state.data.shippmentDate),
+                            shippmentDate:moment(this.state.data.shippmentDate),
                             note1:data.note1,
                             note2:data.note2,
                             status:orderStatus
