@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
-import {Form, Input, Button, Space, InputNumber, Select} from "antd";
-import {MinusCircleOutlined, PlusOutlined} from "@ant-design/icons";
+import {Form, Button, InputNumber, Select, notification} from "antd";
+import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import API from "../server-apis/api";
 
 class AddNewProductsToOrder extends Component {
@@ -17,12 +17,25 @@ class AddNewProductsToOrder extends Component {
         params.append('quantity', values.quantity);
         API.patch(`orders/${this.props.orderId}/add-product/${values.product}`,params,{ headers: { Authorization: this.props.token}})
             .then((res) => {
-                console.log(res);
-                //this.successfullyAdded();
+            //    const ordereProducts=res.data.orderedProducts;
+                let orderedProducts=res.data.orderedProducts.map((p)=>{
+                    return {
+                        id: p.product.id,
+                        color: p.product.color,
+                        model: p.product.model,
+                        name: p.product.name,
+                        price: p.product.price,
+                        quantity: p.quantity,
+                    }
+                })
+                var addedProd=orderedProducts.slice(-1).pop();
+                this.props.handler(res.data,addedProd);
+                this.successfullyAdded("Product is successfully added to the order.");
             })
             .catch(error => {
-                // this.setState({ errorMessage: error.message });
-             //   this.errorHappend(error);
+                if(error.response.status===403)
+                    this.errorHappend("Product already exists in the order.");
+                else  this.errorHappend(error);// this.setState({ errorMessage: error.message });
                 console.error('There was an error!', error);
             });
     };
@@ -40,7 +53,23 @@ class AddNewProductsToOrder extends Component {
                 }
             )
     }
-
+    successfullyAdded = (message) => {
+        notification.info({
+            message: `Notification`,
+            description:message,
+            placement:"bottomRight",
+            icon: <CheckCircleFilled style={{ color: '#0AC035' }} />
+        });
+    };
+    errorHappend = (error) => {
+        notification.info({
+            message: `Notification`,
+            description:
+                `There was an error! ${error}`,
+            placement:"bottomRight",
+            icon: <InfoCircleFilled style={{ color: '#f53333' }} />
+        });
+    };
     render() {
         const { error, data } = this.state;
         let options = []
@@ -57,43 +86,20 @@ class AddNewProductsToOrder extends Component {
         }  else {
             return (
             <div>
-            <Form onFinish={this.onFinish} autoComplete="off">
+                <Form onFinish={this.onFinish} autoComplete="off">
                 <Form.Item  label="Choose a product" name="product" rules={[{ required: true, message: 'Missing product' }]}>
                     <Select mode="single" options={options} />
                 </Form.Item>
                 <Form.Item label="Choose a quantity" name="quantity" rules={[{ required: true, message: 'Missing quantity' }]}>
                     <InputNumber placeholder="Quantity" />
                 </Form.Item>
-                {/*<Form.List name="products">*/}
-                {/*    {(fields, { add, remove }) => (*/}
-                {/*        <>*/}
-                {/*            {fields.map(({ key, name, ...restField }) => (*/}
-                {/*                <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">*/}
-                {/*                    <Form.Item*/}
-                {/*                        {...restField} name={[name, 'first']} rules={[{ required: true, message: 'Missing product' }]}>*/}
-                {/*                        <Input placeholder="Product ID" />*/}
-                {/*                    </Form.Item>*/}
-                {/*                    <Form.Item*/}
-                {/*                        {...restField} name={[name, 'last']} rules={[{ required: true, message: 'Missing quantity' }]}>*/}
-                {/*                        <InputNumber placeholder="Quantity" />*/}
-                {/*                    </Form.Item>*/}
-                {/*                    <MinusCircleOutlined onClick={() => remove(name)} />*/}
-                {/*                </Space>*/}
-                {/*            ))}*/}
-                {/*            <Form.Item>*/}
-                {/*                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>*/}
-                {/*                    Add field*/}
-                {/*                </Button>*/}
-                {/*            </Form.Item>*/}
-                {/*        </>*/}
-                {/*    )}*/}
-                {/*</Form.List>*/}
                 <Form.Item>
                     <Button type="primary" htmlType="submit">
-                        Submit
+                        Add product
                     </Button>
                 </Form.Item>
-            </Form></div>
+            </Form>
+            </div>
         );
     }
     }

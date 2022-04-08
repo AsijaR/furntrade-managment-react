@@ -15,6 +15,7 @@ import authService from "../services/auth.service";
 import LoginPage from "./LoginPage";
 import { useHistory } from "react-router-dom";
 import OrderDetails from "./OrderDetails";
+import CreateNewOrder from "./CreateNewOrder";
 
 
 class MainLayoutPage extends Component {
@@ -101,6 +102,7 @@ class MainLayoutPage extends Component {
                                         <Route path="/settings" element={  <SettingsPage/>}/>
                                         <Route exact path="/orders/:id" element={  <OrderDetails/>}/>
                                         <Route exact path="/login" element={  <LoginPage/>}/>
+                                        <Route path="/create-new-order" element={<CreateNewOrder/>}/>
                                     </Routes>
                                 </div>
                             </Content>

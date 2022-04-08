@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Row, Col, Typography, Input, Form, Select, DatePicker, Space, Button} from "antd";
+import {Row, Col, Typography, Input, Form, Select, DatePicker, Space, Button, Modal, Divider} from "antd";
 import moment from 'moment';
 import API from "../server-apis/api";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
@@ -18,10 +18,18 @@ class OrderDetails extends Component {
             orderStatus:"",
             customers:[],
             products:[],
+            isModalVisible:false
         }
         this.token="Bearer "+ JSON.parse(localStorage.getItem("token"));
         this.onFinish=this.onFinish.bind(this);
         this.onFinishFailed=this.onFinishFailed.bind(this);
+        this.handler = this.handler.bind(this)
+    }
+    handler(order,newProduct) {
+        this.setState({
+            data:order,
+            products:  [...this.state.products,newProduct]
+        })
     }
     selectSomeProperties(account) {
         return Object.keys(account).reduce(function(obj, k) {
@@ -112,9 +120,18 @@ class OrderDetails extends Component {
     onFinishFailed = (errorInfo) => {
         console.log('Failed:', errorInfo);
     };
+    showModal = () => {
+        this.setState({
+            isModalVisible:  true
+        })
+    };
+    handleCancel = () => {
+        this.setState({
+            isModalVisible:  false
+        })
+    };
     render() {
-        //console.log("drugo",this.state.selectedCustomer)
-        const { error, isLoaded, data,selectedCustomer,orderStatus,customers,products } = this.state;
+        const { error, isLoaded, data,selectedCustomer,orderStatus,customers,products,isModalVisible } = this.state;
         let options = []
         if (customers.length > 0) {
             customers.forEach(role => {
@@ -133,24 +150,24 @@ class OrderDetails extends Component {
 
                 <Space direction="vertical" style={{width:"100%"}}>
                     <Text mark style={{fontSize:"22px"}} >Order id: {data.id}</Text>
-                    <AddNewProductsToOrder orderId={data.id} token={this.token}/>
-                    <Form
-                        name="basic"
+                    <Button type="default" onClick={this.showModal} style={{float:"right", marginRight:"4.5em"}} size="middle"> Add more products to the order</Button>
+                    <Modal title="Add product to the order" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel}
+                           footer={[<Button key="back" onClick={this.handleCancel}> Cancel </Button>]}>
+                        <AddNewProductsToOrder orderId={data.id} token={this.token} handler = {this.handler}/>
+                    </Modal>
+                    <Form name="basic"
                         initialValues={{
                             //mozda ovo popravi prikaz al nije bitno
                             customer:data.customer.name,
-                            shippmentDate:moment(this.state.data.shippmentDate),
+                        //    shippmentDate:moment(this.state.data.shippmentDate),
                             note1:data.note1,
                             note2:data.note2,
                             status:orderStatus
                         }}
-                        onFinish={this.onSaveChanges}
-                        onFinishFailed={this.onSaveChangesFailed}
-                        autoComplete="off"
-                    >
+                        onFinish={this.onSaveChanges} onFinishFailed={this.onSaveChangesFailed} autoComplete="off">
                         <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
                             <Col className="gutter-row" span={8}>
-                                <div style={{border: '2px solid black', padding: '8px' }}>
+                                <div style={{ padding: '8px' }}>
                                     <Form.Item label="Customer" name="customer" rules={[ {required: true,message: 'Please pick a customer',}, ]}>
                                         <Select mode="single" options={options} />
                                     </Form.Item>
@@ -184,20 +201,18 @@ class OrderDetails extends Component {
                                     <Space direction="horizontal">
                                         <Text strong>Total price: {this.state.data.totalOrderPrice} €</Text>
                                     </Space>
-
+                                    <Form.Item>
+                                        <Button type="primary" htmlType="submit" style={{width:"10em", marginTop:"2em", marginRight:"4em"}}>Save</Button>
+                                    </Form.Item>
                                 </div>
                             </Col>
+                            <Divider type="vertical" style={{ height: "22em", backgroundColor: "#7c7d7c" }}/>
                             <Col className="gutter-row" span={15}>
-                                <div style={{border: '2px solid black', padding: '8px' }}>
+                                <div style={{ padding: '8px' }}>
                                     <h3>Ordered products</h3>
-                                    <OrderedProductsTable  orderId={data.id} products={this.state.products} token={this.token}/>
+                                    <OrderedProductsTable orderId={data.id} products={products} token={this.token}/>
                                 </div>
                             </Col>
-                        </Row>
-                        <Row>
-                            <Form.Item>
-                                <Button type="primary" htmlType="submit" style={{width:"10em",float:"right" , marginTop:"2em", marginRight:"4em"}}>Save</Button>
-                            </Form.Item>
                         </Row>
                     </Form>
                 </Space>

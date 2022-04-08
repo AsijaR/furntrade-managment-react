@@ -142,7 +142,6 @@ class OrdersPage extends Component {
         const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
         API.get(`orders`,{ headers: { Authorization: token}})
             .then(res => {
-                // console.log(res.data._embedded.productList);
                 const orders = res.data._embedded.ordersDtoList;
                 this.setState({loading: false,data:orders });
             });
@@ -277,7 +276,7 @@ class OrdersPage extends Component {
                            <Select.Option value="CANCELLED">Cancelled</Select.Option>
                        </Select>
                    </div>
-                    <Link to="/add-product">
+                    <Link to="/create-new-order">
                         <Button style={{float:"right", background: "#0AC035",marginBottom:"1em", marginTop:"1em" }}
                                 type="primary">New order</Button>
                     </Link>

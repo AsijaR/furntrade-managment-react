@@ -18,6 +18,11 @@ class OrderedProductsTable extends Component {
         this.isEditing= (record) => record.id === this.state.editingKey;
         this.saveData=this.saveData.bind(this);
     }
+    UNSAFE_componentWillReceiveProps(nextProps) {
+        if (nextProps.products !== this.props.products) {
+            this.setState({ data: nextProps.products });
+        }
+    }
     columns = [
         ...orderedProductsDataColumns,
         {
@@ -95,6 +100,16 @@ class OrderedProductsTable extends Component {
                 ...item,
                 ...row
             });
+            API.patch(`/orders/${this.props.orderId}/product/${id}/change-quantity/`, row,{ headers: { Authorization: this.props.token}})
+                .then((response) => {
+                    this.setState({ data: newData, editingKey: "" });
+                    this.successfullyAdded("Product info is updated")
+                })
+                .catch(error => {
+                    this.setState({ errorMessage: error.message });
+                    this.errorHappend("Failed to save changes.")
+                    console.error('There was an error!', error);
+                });
             console.log(newData)
         });
         this.setState({ editingKey: "",isEditing:false });
@@ -125,7 +140,6 @@ class OrderedProductsTable extends Component {
                     };
                     return {
                         record,
-                       //  inputType: col.dataIndex === "age" ? "number" : "text",
                         inputType: checkInput(col.dataIndex),
                         dataIndex: col.dataIndex,
                         title: col.title,
