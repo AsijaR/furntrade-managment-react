@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Row, Col, Typography, Input, Form, Select, DatePicker, Space, Button, Modal, Divider} from "antd";
+import {Row, Col, Typography, Input, Form, Select, DatePicker, Space, Button, Modal, Divider, notification} from "antd";
 import moment from 'moment';
 import API from "../server-apis/api";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
@@ -11,13 +11,17 @@ class OrderDetails extends Component {
     constructor(props) {
         super(props);
         this.state={
-            error: null,
-            isLoaded: false,
             data: [],
+            orderId:0,
             selectedCustomer:"",
             orderStatus:"",
             customers:[],
             products:[],
+            totalOrderPrice:0,
+            initialFormValues:[],
+            isNewOrder:true,
+            error: null,
+            isLoaded: false,
             isModalVisible:false
         }
         this.token="Bearer "+ JSON.parse(localStorage.getItem("token"));
@@ -26,10 +30,34 @@ class OrderDetails extends Component {
         this.handler = this.handler.bind(this)
     }
     handler(order,newProduct) {
-        this.setState({
-            data:order,
-            products:  [...this.state.products,newProduct]
-        })
+        if(!this.state.isNewOrder)
+        {
+            this.setState({
+                data:order,
+                products:  [...this.state.products,newProduct]
+            })
+        }
+        else
+        {
+            if(this.state.products.some(p=>p.id===newProduct.id)){
+                notification.info({
+                    message: `Notification`,
+                    description:
+                        `Product already exists in the list.`,
+                    placement:"bottomRight",
+                    icon: <InfoCircleFilled style={{ color: '#f53333' }} />
+                });
+            }
+            else
+            {
+                var currentOrderPrice=this.state.totalOrderPrice+(newProduct.price*newProduct.quantity);
+                this.setState({
+                    //   newOrderData:order,
+                    products:  [...this.state.products,newProduct],
+                    totalOrderPrice:currentOrderPrice
+                })
+            }
+        }
     }
     selectSomeProperties(account) {
         return Object.keys(account).reduce(function(obj, k) {
@@ -50,41 +78,60 @@ class OrderDetails extends Component {
     }
     async componentDidMount() {
         let url = window.location.pathname;
-        var currentCustomer="";
-        var orderId = url.substring(url.lastIndexOf('/') + 1);
-        await API.get(`orders/${orderId}`,{ headers: { Authorization: this.token}})
-            .then(
-                (res) => {
-                    const orderDetails = res.data;
-                    //   console.log(orderDetails)
-                    let orderedProducts=orderDetails.orderedProducts.map((p)=>{
-                        return {
-                            id: p.product.id,
-                            color: p.product.color,
-                            model: p.product.model,
-                            name: p.product.name,
-                            price: p.product.price,
-                            quantity: p.quantity,
-                        }
-                    })
-                    currentCustomer=orderDetails.customer.name;
-                    this.setState({
-                        isLoaded: true,
-                        data:orderDetails,
-                        products:orderedProducts,
-                        orderStatus:orderDetails.status
-                    });
-                },
-                // Note: it's important to handle errors here
-                // instead of a catch() block so that we don't swallow
-                // exceptions from actual bugs in components.
-                (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error
-                    });
-                }
-            )
+        if(url!=="/orders/create-new-order")
+        {
+            var currentCustomer="";
+            var orderId = url.substring(url.lastIndexOf('/') + 1);
+            this.setState({orderId:orderId})
+            await API.get(`orders/${orderId}`,{ headers: { Authorization: this.token}})
+                .then(
+                    (res) => {
+                        const orderDetails = res.data;
+                        //   console.log(orderDetails)
+                        let orderedProducts=orderDetails.orderedProducts.map((p)=>{
+                            return {
+                                id: p.product.id,
+                                color: p.product.color,
+                                model: p.product.model,
+                                name: p.product.name,
+                                price: p.product.price,
+                                quantity: p.quantity,
+                            }
+                        })
+                        currentCustomer=orderDetails.customer.name;
+                        this.setState({
+                            isLoaded: true,
+                            isNewOrder:false,
+                            data:orderDetails,
+                            products:orderedProducts,
+                            orderStatus:orderDetails.status,
+                            totalOrderPrice:orderDetails.totalOrderPrice,
+                            initialFormValues: {
+                                customer: orderDetails.customer.name,
+                                shippmentDate: moment(orderDetails.shippmentDate),
+                                note1: orderDetails.note1,
+                                note2: orderDetails.note2,
+                                status: orderDetails.status
+                            }
+                        });
+                    },
+                    // Note: it's important to handle errors here
+                    // instead of a catch() block so that we don't swallow
+                    // exceptions from actual bugs in components.
+                    (error) => {
+                        this.setState({
+                            isLoaded: true,
+                            error
+                        });
+                    }
+                )
+        }
+        else{
+            this.setState({isLoaded:true,
+                initialFormValues: {
+                    status: "Waiting"
+                }});
+        }
         await API.get(`customers`,{ headers: { Authorization: this.token}})
             .then(
                 (res) => {
@@ -98,7 +145,6 @@ class OrderDetails extends Component {
                     fullNameArray.forEach(x=>{
                         if(x.fullName.includes(this.state.selectedCustomer))
                            name=x.fullName;
-                           // this.setState({selectedCustomer:name});
                     })
                     this.setState({customers:fullNameArray,selectedCustomer:name});
                 },
@@ -110,12 +156,89 @@ class OrderDetails extends Component {
                 }
             )
     }
-
+    createNewOrder(customerName,values)
+    {
+        const order={
+            customerName:customerName,
+            shippmentDate:values.shippmentDate,
+            note1:values.note1,
+            note2:values.note2,
+        }
+        var products=this.state.products.map((p)=>{
+            const product={
+                id: p.id,
+                color: p.color,
+                model: p.model,
+                name: p.name,
+                price: p.price,
+            }
+            const productInfo={
+                product:product,
+                quantity:p.quantity
+            }
+            return productInfo;
+        });
+        API.post(`/orders/add`,{order,products},{ headers: { Authorization: this.token}})
+            .then((res) => {
+                this.successfullyAdded("Order is successfully created!");
+                console.log(res);
+            })
+            .catch(error => {
+                // this.setState({ errorMessage: error.message });
+                this.errorHappend(error);
+                console.error('There was an error!', error);
+            });
+    }
     onFinish = (values) => {
-        console.log('Success:', values);
+
+       // const selectedCustomer=this.state.customers.find(({id})=>id===values.customer);
+        var customerName=this.state.selectedCustomer.split(",")[0];
+        console.log("wfwf"+customerName);
+        if(this.state.isNewOrder)
+        {
+            this.createNewOrder(customerName,values)
+        }
+        else
+        {
+            API.put(`/orders/update/${this.state.orderId}`,
+                {
+                    customerName:customerName,
+                    shippmentDate:values.shippmentDate,
+                    status:values.status,
+                    note1:values.note1,
+                    note2:values.note2
+                    },
+                { headers: { Authorization: this.token}})
+                .then((res) => {
+                    this.successfullyAdded("Order is updated");
+                })
+                .catch(error => {
+                    // this.setState({ errorMessage: error.message });
+                    this.errorHappend(error);
+                    console.error('There was an error!', error);
+                });
+            //console.log("nije"+JSON.stringify(order));
+        }
     };
     onFinishFailed = (errorInfo) => {
         console.log('Failed:', errorInfo);
+    };
+    successfullyAdded = (message) => {
+        notification.info({
+            message: `Notification`,
+            description:message,
+            placement:"bottomRight",
+            icon: <CheckCircleFilled style={{ color: '#0AC035' }} />
+        });
+    };
+    errorHappend = (error) => {
+        notification.info({
+            message: `Notification`,
+            description:
+                `There was an error! ${error}`,
+            placement:"bottomRight",
+            icon: <InfoCircleFilled style={{ color: '#f53333' }} />
+        });
     };
     showModal = () => {
         this.setState({
@@ -128,7 +251,14 @@ class OrderDetails extends Component {
         })
     };
     render() {
-        const { error, isLoaded, data,selectedCustomer,orderStatus,customers,products,isModalVisible } = this.state;
+        const { error, isLoaded, data,totalOrderPrice,initialFormValues,isNewOrder,customers,products,isModalVisible } = this.state;
+        let header;
+        if(!isNewOrder){
+            header=<Text mark style={{fontSize:"22px"}} >Order id: {data.id}</Text>;
+        }
+        else {
+            header=<Text style={{fontSize:"22px"}} >Create new order</Text>
+        }
         let options = []
         if (customers.length > 0) {
             customers.forEach(role => {
@@ -144,24 +274,16 @@ class OrderDetails extends Component {
             return <div>Loading...</div>;
         } else {
             return (
-
                 <Space direction="vertical" style={{width:"100%"}}>
-                    <Text mark style={{fontSize:"22px"}} >Order id: {data.id}</Text>
+                    {header}
                     <Button type="default" onClick={this.showModal} style={{float:"right", marginRight:"4.5em"}} size="middle"> Add more products to the order</Button>
                     <Modal title="Add product to the order" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel}
                            footer={[<Button key="back" onClick={this.handleCancel}> Cancel </Button>]}>
-                        <AddNewProductsToOrder orderId={data.id} token={this.token} handler = {this.handler} isNewOrder={false}/>
+                        <AddNewProductsToOrder orderId={data.id} token={this.token} handler={this.handler} isNewOrder={isNewOrder}/>
                     </Modal>
                     <Form name="basic"
-                        initialValues={{
-                            //mozda ovo popravi prikaz al nije bitno
-                            customer:data.customer.name,
-                            shippmentDate:moment(this.state.data.shippmentDate),
-                            note1:data.note1,
-                            note2:data.note2,
-                            status:orderStatus
-                        }}
-                        onFinish={this.onSaveChanges} onFinishFailed={this.onSaveChangesFailed} autoComplete="off">
+                        initialValues={initialFormValues}
+                        onFinish={this.onFinish} onFinishFailed={this.onFinishFailed} autoComplete="off">
                         <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
                             <Col className="gutter-row" span={8}>
                                 <div style={{ padding: '8px' }}>
@@ -173,8 +295,8 @@ class OrderDetails extends Component {
                                         <DatePicker format="DD.MM.YYYY" onChange={this.onChange} picker="date" />
                                     </Form.Item>
 
-                                    <Form.Item label="Status" name="status" rules={[ {required: true,message: 'Please pick a status',}, ]}>
-                                        <Select mode="single" >
+                                    <Form.Item label="Status" name="status" rules={[ {required: true,message: 'Please pick a status',}, ]} >
+                                        <Select mode="single" disabled={isNewOrder}>
                                             <Select.Option value="WAITING">Waiting</Select.Option>
                                             <Select.Option value="IN_PROGRESS">In Progress</Select.Option>
                                             <Select.Option value="COMPLETED">Completed</Select.Option>
@@ -182,21 +304,20 @@ class OrderDetails extends Component {
                                         </Select>
                                     </Form.Item>
 
-                                    {/*za rules stavi da pazi sta kuca*/}
-                                    <Form.Item label="Note 1" name="note1" rules={[ {required: false,message: 'Please pick a date',},{
-                                        pattern: /^[a-zA-Z0-9]+$/,
-                                        message: 'Name can only include letters and numbers.',
+                                    <Form.Item label="Note 1" name="note1" rules={[ {required: false},{
+                                        pattern: /^[a-zA-Z0-9_@/.#$%*()+?! ]+$/,
+                                        message: 'Note can only include letters,numbers and some special characters.',
                                     } ]}>
                                         <Input/>
                                     </Form.Item>
-                                    <Form.Item label="Note 2" name="note2" rules={[ {required: false,message: 'Please pick a date',},{
-                                        pattern: /^[a-zA-Z0-9]+$/,
-                                        message: 'Name can only include letters and numbers.',
+                                    <Form.Item label="Note 2" name="note2" rules={[ {required: false},{
+                                        pattern: /^[a-zA-Z0-9_@/.#$%*()+?! ]+$/,
+                                        message: 'Name can only include letters,numbers and some special characters.',
                                     } ]}>
                                         <Input/>
                                     </Form.Item>
                                     <Space direction="horizontal">
-                                        <Text strong>Total price: {this.state.data.totalOrderPrice} €</Text>
+                                        <Text strong>Total price: {totalOrderPrice} €</Text>
                                     </Space>
                                     <Form.Item>
                                         <Button type="primary" htmlType="submit" style={{width:"10em", marginTop:"2em", marginRight:"4em"}}>Save</Button>

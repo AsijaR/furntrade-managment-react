@@ -50,7 +50,7 @@ class AddNewProductsToOrder extends Component {
                 price: newProd.price,
                 quantity: values.quantity
             };
-            this.props.handler(product);
+            this.props.handler(this.state.data,product);
         }
     };
     async componentDidMount() {
