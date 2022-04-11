@@ -66,7 +66,7 @@ class CustomersPage extends Component {
         this.setState({ editingKey: "" });
     };
     componentDidMount() {
-        this.setState({ loading: true });
+      //  this.setState({ loading: true });
         const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
         API.get(`customers`,{ headers: { Authorization: token}})
             .then(res => {

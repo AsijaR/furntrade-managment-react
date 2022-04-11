@@ -77,18 +77,7 @@ class EditableTableCell extends Component {
                    const { getFieldDecorator } = form;
                    return (
                        <td {...restProps}>
-                           {editing
-                               ? // <FormItem style={{ margin: 0 }}>
-                                 //   {getFieldDecorator(dataIndex, {
-                                 //     rules: [
-                                 //       {
-                                 //         required: true,
-                                 //         message: `Please Input ${title}!`
-                                 //       }
-                                 //     ]
-                                 //     // initialValue: record[dataIndex]
-                                 //   })(this.getInput())}
-                                 // </FormItem>
+                           {editing ?
                                this.getInput(record, dataIndex, title, getFieldDecorator)
                                : restProps.children}
                        </td>

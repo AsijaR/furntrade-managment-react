@@ -77,8 +77,8 @@ class MainLayoutPage extends Component {
                                     </Menu.Item>)
                                 }
                                 <Menu.Item key="5" icon={<IoMdSettings/>}  >
-                                    <Link to="/settings"/>
-                                    <span>Settings</span>
+                                    <Link to="/my-profile"/>
+                                    <span>My profile</span>
                                 </Menu.Item>
                                 <Menu.Item key="6" icon={<IoLogOut/>} >
                                     <a onClick={this.logoutUser}/>
@@ -98,7 +98,7 @@ class MainLayoutPage extends Component {
                                         ( <Route path="/add-customer"  element={<AddCustomerPage />} />)}
                                         <Route path="/orders" element={  <OrdersPage/>}/>
                                         <Route path="/employees" element={  <EmployeesPage/>}/>
-                                        <Route path="/settings" element={  <SettingsPage/>}/>
+                                        <Route path="/my-profile" element={  <SettingsPage/>}/>
                                         <Route exact path="/orders/:id" element={  <OrderDetails/>}/>
                                         <Route exact path="/login" element={  <LoginPage/>}/>
                                         <Route path="/orders/create-new-order" element={<OrderDetails/>}/>

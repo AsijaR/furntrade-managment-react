@@ -1,25 +1,32 @@
 import React, {Component} from 'react';
-import {Button, Layout, notification, Popconfirm, Space, Table} from "antd";
+import {Button, Layout, notification, Popconfirm, Space, Table,Typography} from "antd";
 import {Link} from "react-router-dom";
 import {Content} from "antd/es/layout/layout";
-import Search from "antd/es/input/Search";
 import EditableTableRow, {EditableContext} from "../components/EditableTableRow";
 import EditableTableCell from "../components/EditableTableCell";
 import API from "../server-apis/api";
 import {employeesDataColumns} from "../tableColumnsData/employeesDataColumns";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
+import AsijaTest from "../components/test";
 
 class EmployeesPage extends Component {
-    state = {
-        data: [],
-        // pagination: {
-        //     current: 1,
-        //     pageSize: 10,
-        // },
-        loading: false,
-        editingKey: "",
-        errorMessage:""
-    };
+    constructor(props) {
+        super(props);
+        this.state = {
+            data: [],
+            error: null,
+            isLoaded: false,
+            editingKey: "",
+            errorMessage: "",
+            asija:""
+        }
+        //   this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
+        // this.onFinish = this.onFinish.bind(this);
+        //  this.onFinishFailed = this.onFinishFailed.bind(this);
+        //this.handler = this.handler.bind(this)
+
+
+    }
     columns = [
         ...employeesDataColumns,
         {
@@ -28,40 +35,37 @@ class EmployeesPage extends Component {
             width: "10%",
             render: (text, record) => {
                 const editable = this.isEditing(record);
-                return (
-                    <div>
-                        {editable ? (
-                            <span>
+                return editable ? (
+                    <span>
                                 <EditableContext.Consumer>
                                   {form => (<a onClick={() => this.saveData(form, record.username)} style={{ marginRight: 8 }}>Save</a>)}
                                 </EditableContext.Consumer>
                                 <a onClick={this.cancel}>Cancel</a>
                             </span>
-                        ) : (
-                            <Space size="middle">
-                                <a onClick={() => this.edit(record.username)}>Edit</a>
-                                <Popconfirm title="Are you sure you want to delete this product?"
-                                            onConfirm={() => this.remove(record.username)}>
-                                    <a style={{color:"red"}}>Delete</a>
-                                </Popconfirm>
-                            </Space>
-                        )}
-                    </div>
+                ) : (
+                    <Space size="middle">
+                        <a onClick={() => this.edit(record.username)}>Edit</a>
+                        <Popconfirm title="Are you sure you want to delete this product?"
+                                    onConfirm={() => this.remove(record.username)}>
+                            <a style={{color:"red"}}>Delete</a>
+                        </Popconfirm>
+                    </Space>
                 );
-            }
+            },
         }
     ];
 
-    isEditing = record => {
+    isEditing = (record) => {
         return record.username === this.state.editingKey;
     };
 
     edit(username) {
-        this.setState({ editingKey: username });
+        console.log("kliknut je edit na korisnika "+JSON.stringify(username));
+        this.setState({editingKey:username});
     }
 
     cancel = () => {
-        this.setState({ editingKey: "" });
+        this.setState({ editingKey: ""});
     };
     componentDidMount() {
         this.setState({ loading: true });
@@ -101,7 +105,7 @@ class EmployeesPage extends Component {
             const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
             const response = API.put(`/users/${username}/update`, row,{ headers: { Authorization: token}})
                 .then((response) => {
-                    this.setState({ data: newData, editingKey: "" });
+                    this.setState({ data: newData, editingKey: ""});
                     this.successfullyAdded("Empolyee info is updated")
                 })
                 .catch(error => {
@@ -174,7 +178,8 @@ class EmployeesPage extends Component {
                     {/*<div style={{marginBottom:"1em"}}>*/}
                     {/*    <Search placeholder="Search products by name" onSearch={this.onSearch}  />*/}
                     {/*</div>*/}
-                    <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="username" rowClassName="editable-row"/>
+                    <AsijaTest/>
+                    <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey={data.username} rowClassName="editable-row"/>
                 </Content>
             </Layout>
         );

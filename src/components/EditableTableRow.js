@@ -13,10 +13,4 @@ class EditableTableRow extends Component {
 }
 
 export default EditableTableRow=Form.create()(EditableTableRow);
-//  function EditableTableRow = (form, index, ...props ) => (
-//     <EditableContext.Provider value={form}>
-//         <tr {...props} />
-//     </EditableContext.Provider>
-// );
-//
-// export default EditableTableRow =Form.create()(EditableTableRow);
+
