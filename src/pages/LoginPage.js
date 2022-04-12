@@ -1,21 +1,20 @@
 import React, {Component} from 'react';
-import {Button, Col, Form, Input, notification, Row} from "antd";
+import '@ant-design/compatible/assets/index.css';
+import { Form,Button, Col, Input, notification, Row } from "antd";
 import AuthService from "../services/auth.service";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
-
 class LoginPage extends Component{
     constructor(props) {
         super(props);
-        this.onFinish = this.onFinish.bind(this);
-        this.onChangeUsername = this.onChangeUsername.bind(this);
-        this.onChangePassword = this.onChangePassword.bind(this);
-
         this.state = {
             username: "",
             password: "",
             loading: false,
             message: ""
         };
+        this.onFinish = this.onFinish.bind(this);
+        this.onChangeUsername = this.onChangeUsername.bind(this);
+        this.onChangePassword = this.onChangePassword.bind(this);
     }
     onChangeUsername(e) {
         this.setState({
@@ -30,7 +29,6 @@ class LoginPage extends Component{
     }
 
     onFinish = (values) => {
-
         this.setState({
             message: "",
             loading: true
@@ -81,9 +79,8 @@ class LoginPage extends Component{
                     <h2 style={{marginBottom:"2em"}}>Please login to access the website</h2>
                     <Form name="addProductForm"
                           layout="vertical"
-                          initialValues={{  remember: true,}}
                           onFinish={this.onFinish}
-                          onFinishFailed={this.onFinishFailed}
+                          // onFinishFailed={this.onFinishFailed}
                           autoComplete="off">
                         <Form.Item label="Username" name="username" rules={[ {required: true,message: 'Please enter name',}, ]}>
                             <Input />

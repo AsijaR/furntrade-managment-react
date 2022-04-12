@@ -1,86 +1,80 @@
 import React, {Component} from 'react';
-import {Button, Layout, notification, Popconfirm, Space, Table} from "antd";
+import {Button, Layout, notification, Popconfirm, Space, Table,Typography} from "antd";
 import {Link} from "react-router-dom";
 import {Content} from "antd/es/layout/layout";
-import Search from "antd/es/input/Search";
 import EditableTableRow, {EditableContext} from "../components/EditableTableRow";
 import EditableTableCell from "../components/EditableTableCell";
 import API from "../server-apis/api";
 import {employeesDataColumns} from "../tableColumnsData/employeesDataColumns";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
+import Text from "antd/es/typography/Text";
+
 
 class EmployeesPage extends Component {
-    state = {
-        data: [],
-        // pagination: {
-        //     current: 1,
-        //     pageSize: 10,
-        // },
-        loading: false,
-        editingKey: "",
-        errorMessage:""
-    };
-    columns = [
-        ...employeesDataColumns,
-        {
-            title: "Actions",
-            dataIndex: "actions",
-            width: "10%",
-            render: (text, record) => {
-                const editable = this.isEditing(record);
-                return (
-                    <div>
-                        {editable ? (
-                            <span>
-                                <EditableContext.Consumer>
-                                  {form => (<a onClick={() => this.saveData(form, record.username)} style={{ marginRight: 8 }}>Save</a>)}
-                                </EditableContext.Consumer>
-                                <a onClick={this.cancel}>Cancel</a>
-                            </span>
-                        ) : (
-                            <Space size="middle">
-                                <a onClick={() => this.edit(record.username)}>Edit</a>
-                                <Popconfirm title="Are you sure you want to delete this product?"
-                                            onConfirm={() => this.remove(record.username)}>
-                                    <a style={{color:"red"}}>Delete</a>
-                                </Popconfirm>
-                            </Space>
-                        )}
-                    </div>
-                );
-            }
+    constructor(props) {
+        super(props);
+        this.state = {
+            data: [],
+            error: null,
+            loading: true,
+            editingKey: "",
+            errorMessage:null
         }
-    ];
+        this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
+    }
 
-    isEditing = record => {
+    isEditing = (record) => {
         return record.username === this.state.editingKey;
     };
 
     edit(username) {
-        this.setState({ editingKey: username });
+        this.setState({editingKey:username});
     }
 
     cancel = () => {
-        this.setState({ editingKey: "" });
+        this.setState({ editingKey: ""});
     };
     componentDidMount() {
-        this.setState({ loading: true });
         const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
         API.get(`users/all`,{ headers: { Authorization: token}})
             .then(res => {
-                // console.log(res.data._embedded.productList);
                 const employees = res.data._embedded.employeeInfoDtoList;
-                this.setState({loading: false,data:employees });
-            })
+                this.setState({loading: false,data:employees, token:token });
+            }).
+        catch((error)=>{
+            var message=JSON.stringify(error.response.data.error_message);
+            if(message.includes("The Token has expired"))
+            {
+                this.setState({errorMessage:"Your token has expired"})
+            }
+            else
+            {
+                this.setState({errorMessage:error})
+            }
+            this.errorHappend("Failed to delete");
+            console.error('There was an error!', error);
+        });
     }
     async remove(username) {
-        const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-        API.delete(`/users/${username}`,{ headers: { Authorization: token}})
+        API.delete(`/users/${username}`,{ headers: { Authorization: this.state.token}})
             .then(() => {
                 let updatedProducts = [...this.state.data].filter(i => i.username !== username);
                 this.setState({data: updatedProducts});
                 this.successfullyAdded("Employee is deleted. It wont have any access to the website anymore.")
-            }).catch(()=>this.errorHappend("Failed to delete"));
+            })
+            .catch((error)=>{
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
+                this.errorHappend("Failed to delete");
+                console.error('There was an error!', error);
+        });
     }
 
     hasWhiteSpace(s) {
@@ -98,15 +92,22 @@ class EmployeesPage extends Component {
                 ...item,
                 ...row
             });
-            const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-            const response = API.put(`/users/${username}/update`, row,{ headers: { Authorization: token}})
+            API.put(`/users/${username}/update`, row,{ headers: { Authorization: this.state.token}})
                 .then((response) => {
-                    this.setState({ data: newData, editingKey: "" });
+                    this.setState({ data: newData, editingKey: ""});
                     this.successfullyAdded("Empolyee info is updated")
                 })
                 .catch(error => {
-                    this.setState({ errorMessage: error.message });
-                    this.errorHappend("Failed to save changes.")
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"})
+                    }
+                    else
+                    {
+                        this.setState("Failed to save changes")
+                    }
+                    this.errorHappend(error);
                     console.error('There was an error!', error);
                 });
         });
@@ -135,7 +136,30 @@ class EmployeesPage extends Component {
                 cell: EditableTableCell
             }
         };
-        const columns = this.columns.map(col => {
+        const columns = employeesDataColumns.map(col => {
+            if (col.dataIndex === 'actions') {
+                return {
+                    ...col,
+                    render: (text, record) => {
+                        const editable = this.isEditing(record);
+                        return editable ? (
+                            <span>
+                                <EditableContext.Consumer>
+                                    {(form) => ( <Typography.Link onClick={() => this.saveData(form, record.username)} style={{ marginRight: 8 }}>Save</Typography.Link> )}
+                                </EditableContext.Consumer>
+                                <Typography.Link  onClick={this.cancel}>Cancel</Typography.Link>
+                </span>
+                        ) : (
+                            <Space size='middle'>
+                                <Typography.Link disabled={this.state.editingKey !== ''} onClick={() => this.edit(record.username)}>Edit</Typography.Link>
+                                <Popconfirm title='Are you sure you want to delete this employee?' onConfirm={() => this.remove(record.username)}>
+                                    <Typography.Link disabled={this.state.editingKey !== ''} type="danger">Delete</Typography.Link>
+                                </Popconfirm>
+                            </Space>
+                        );
+                    }
+                };
+            }
             if (!col.editable) {
                 return col;
             }
@@ -152,7 +176,6 @@ class EmployeesPage extends Component {
                     };
                     return {
                         record,
-                        // inputType: col.dataIndex === "age" ? "number" : "text",
                         inputType: checkInput(col.dataIndex),
                         dataIndex: col.dataIndex,
                         title: col.title,
@@ -162,23 +185,29 @@ class EmployeesPage extends Component {
             };
         });
         const { data, loading } = this.state;
+        if (this.state.errorMessage) {
+            return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+                <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
+                {this.state.errorMessage.includes("token")&&(<Link to="/login">
+                    <Button>Click here to login again</Button>
+                </Link>)}
+            </Space>;
+        } else
+        {
         return (
             <Layout>
                 <div>
-                    <Link to="/add-product">
+                    <Link to="/add-employee">
                         <Button style={{float:"right", background: "#0AC035",marginBottom:"1em", marginTop:"1em" }}
                                 type="primary">New emplyee</Button>
                     </Link>
                 </div>
                 <Content>
-                    {/*<div style={{marginBottom:"1em"}}>*/}
-                    {/*    <Search placeholder="Search products by name" onSearch={this.onSearch}  />*/}
-                    {/*</div>*/}
                     <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="username" rowClassName="editable-row"/>
                 </Content>
             </Layout>
         );
-    }
+    }}
 }
 
 export default EmployeesPage;

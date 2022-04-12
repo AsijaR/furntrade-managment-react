@@ -49,5 +49,10 @@ export const customersDataColumns = [
         dataIndex: "contactPersonEmail",
         key: "contactPersonEmail",
         editable: true
+    },
+    {
+        title: 'Actions',
+        dataIndex: 'actions',
+        width: '10%',
     }
 ];

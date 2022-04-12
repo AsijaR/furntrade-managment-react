@@ -1,41 +1,41 @@
-export const productDataColumns = [
+export const orderedProductsDataColumns = [
     {
         title: "Id",
         dataIndex: "id",
         key: "id",
-        width: "6%",
+        width: "15%",
         editable: false
     },
     {
         title: "Name",
         dataIndex: "name",
         key: "name",
-        editable: true
+        editable: false
     },
     {
         title: "Model",
         dataIndex: "model",
         key: "model",
-        editable: true
-    },
-    {
-        title: "Material",
-        dataIndex: "material",
-        key: "material",
-        editable: true
+        editable: false
     },
     {
         title: "Color",
         dataIndex: "color",
         key: "color",
-        editable: true
+        editable: false
     },
     {
         title: "Price",
         dataIndex: "price",
-        width: '10%',
         key: "price",
-        className: 'column-money',
+        editable: false,
+        render: (price) => { return(<p>{price}€</p>)}
+    },
+    {
+        title: "Quantity",
+        dataIndex: "quantity",
+        key: "quantity",
+        width: "15%",
         editable: true
     },
     {

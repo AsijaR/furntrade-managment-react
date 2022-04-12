@@ -26,11 +26,21 @@ class AuthService {
     getCurrentUser() {
         if(JSON.parse(localStorage.getItem("token"))!==null){
             var loggedUser=jwtDecode(JSON.parse(localStorage.getItem("token")));
-            this.user.username=loggedUser.sub;
-            console.log("original "+loggedUser.roles.includes("admin"));
-            this.user.isAdmin=loggedUser.roles.includes("admin");
-            return this.user;
+            var expired=jwtDecode(JSON.parse(localStorage.getItem("token"))).exp;
+          //  console.log("token",new Date(expired*1000));
+            if(expired<Date.now()/1000)
+            {
+                localStorage.clear();
+                return null;
+            }
+            else{
+                this.user.username=loggedUser.sub;
+                console.log("original "+loggedUser.roles.includes("admin"));
+                this.user.isAdmin=loggedUser.roles.includes("admin");
+                return this.user;
+            }
         }
+        //if()
         else return  null;
     }
 }

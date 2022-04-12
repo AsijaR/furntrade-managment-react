@@ -9,25 +9,30 @@ export const employeesDataColumns = [
     {
         title: "First name",
         dataIndex: "firstName",
-        key: "firstName",
+        // key: "firstName",
         editable: true
     },
     {
         title: "Last Name",
         dataIndex: "lastName",
-        key: "lastName",
+        // key: "lastName",
         editable: true
     },
     {
         title: "Works in",
         dataIndex: "placeOfWork",
-        key: "placeOfWork",
+        // key: "placeOfWork",
         editable: true
     },
     {
         title: "Email",
         dataIndex: "email",
-        key: "email",
+        // key: "email",
         editable: true
+    },
+    {
+        title: 'Actions',
+        dataIndex: 'actions',
+        width: '10%',
     }
 ];

@@ -1,10 +1,13 @@
 import React, {Component} from 'react';
-import { Form,  Input, InputNumber, Select, DatePicker} from "antd";
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Input, InputNumber, Select, DatePicker } from "antd";
 import moment from "moment";
 import {EditableContext} from "./EditableTableRow";
 
 const FormItem = Form.Item;
 const Option = Select.Option;
+
 class EditableTableCell extends Component {
     getInput = (record, dataIndex, title, getFieldDecorator) => {
         switch (this.props.inputType) {
@@ -75,18 +78,7 @@ class EditableTableCell extends Component {
                    const { getFieldDecorator } = form;
                    return (
                        <td {...restProps}>
-                           {editing
-                               ? // <FormItem style={{ margin: 0 }}>
-                                 //   {getFieldDecorator(dataIndex, {
-                                 //     rules: [
-                                 //       {
-                                 //         required: true,
-                                 //         message: `Please Input ${title}!`
-                                 //       }
-                                 //     ]
-                                 //     // initialValue: record[dataIndex]
-                                 //   })(this.getInput())}
-                                 // </FormItem>
+                           {editing ?
                                this.getInput(record, dataIndex, title, getFieldDecorator)
                                : restProps.children}
                        </td>
