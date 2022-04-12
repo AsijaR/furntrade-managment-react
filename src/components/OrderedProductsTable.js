@@ -23,38 +23,10 @@ class OrderedProductsTable extends Component {
             this.setState({ data: nextProps.products });
         }
     }
-    columns = [
-        ...orderedProductsDataColumns,
-        {
-            title: "Actions",
-            dataIndex: "actions",
-            width: "10%",
-            render: (text, record) => {
-               const editable = this.isEditing(record);
-                return editable ?(
-                            <span>
-                                <EditableContext.Consumer>
-                                  {form => (<Typography.Link onClick={() => this.saveData(form, record.id)} style={{ marginRight: 8 }}>Save</Typography.Link>)}
-                                </EditableContext.Consumer>
-                                <Typography.Link onClick={this.cancel}>Cancel</Typography.Link>
-                            </span>
-                        ) : (
-                            <Space size="middle">
-                                <Typography.Link onClick={() => this.edit(record)}>Edit</Typography.Link>
-                                <Popconfirm title="Are you sure you want to delete this customer?" onConfirm={() => this.remove(record.id)}>
-                                    <Typography.Link style={{color:"red"}}>Delete</Typography.Link>
-                                </Popconfirm>
-                            </Space>
-                        );
-            }
-        }
-    ];
-    // isEditing =(record) => {
-    //     console.log("u isEditing sam -> "+this.state.editingKey+" <-je nesto");
-    //     return record.id === this.state.editingKey;
-    // };
+    isEditing =(record) => {
+        return record.id === this.state.editingKey;
+    };
     edit(record) {
-        console.log("u editovanje sam kliknula")
         this.setState({ editingKey: record.id,});
     }
     cancel = () => {
@@ -110,20 +82,41 @@ class OrderedProductsTable extends Component {
                     this.errorHappend("Failed to save changes.")
                     console.error('There was an error!', error);
                 });
-       //     console.log(newData)
         });
         this.setState({ editingKey: "",isEditing:false });
 
     }
     render() {
-      //  console.log(this.props.products)
         const components = {
             body: {
                 row: EditableTableRow,
                 cell: EditableTableCell
             }
         };
-        const columns = this.columns.map(col => {
+        const columns = orderedProductsDataColumns.map(col => {
+            if (col.dataIndex === 'actions') {
+                return {
+                    ...col,
+                    render: (text, record) => {
+                        const editable = this.isEditing(record);
+                        return editable ? (
+                            <span>
+                                <EditableContext.Consumer>
+                                    {(form) => ( <Typography.Link onClick={() => this.saveData(form, record.id)} style={{ marginRight: 8 }}>Save</Typography.Link> )}
+                                </EditableContext.Consumer>
+                                <Typography.Link  onClick={this.cancel}>Cancel</Typography.Link>
+                </span>
+                        ) : (
+                            <Space size='middle'>
+                                <Typography.Link disabled={this.state.editingKey !== ''} onClick={() => this.edit(record.id)}>Edit</Typography.Link>
+                                <Popconfirm title='Are you sure you want to delete this product from order?' onConfirm={() => this.remove(record.id)}>
+                                    <Typography.Link disabled={this.state.editingKey !== ''} type="danger">Delete</Typography.Link>
+                                </Popconfirm>
+                            </Space>
+                        );
+                    }
+                };
+            }
             if (!col.editable) {
                 return col;
             }

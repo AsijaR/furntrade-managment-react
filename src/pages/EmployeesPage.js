@@ -7,7 +7,7 @@ import EditableTableCell from "../components/EditableTableCell";
 import API from "../server-apis/api";
 import {employeesDataColumns} from "../tableColumnsData/employeesDataColumns";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
-import AsijaTest from "../components/test";
+
 
 class EmployeesPage extends Component {
     constructor(props) {
@@ -15,52 +15,23 @@ class EmployeesPage extends Component {
         this.state = {
             data: [],
             error: null,
-            isLoaded: false,
+            loading: true,
             editingKey: "",
-            errorMessage: "",
-            asija:""
         }
-        //   this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
+
+        this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
         // this.onFinish = this.onFinish.bind(this);
         //  this.onFinishFailed = this.onFinishFailed.bind(this);
         //this.handler = this.handler.bind(this)
-
-
+        this.columns = [
+            ...employeesDataColumns]
     }
-    columns = [
-        ...employeesDataColumns,
-        {
-            title: "Actions",
-            dataIndex: "actions",
-            width: "10%",
-            render: (text, record) => {
-                const editable = this.isEditing(record);
-                return editable ? (
-                    <span>
-                                <EditableContext.Consumer>
-                                  {form => (<a onClick={() => this.saveData(form, record.username)} style={{ marginRight: 8 }}>Save</a>)}
-                                </EditableContext.Consumer>
-                                <a onClick={this.cancel}>Cancel</a>
-                            </span>
-                ) : (
-                    <Space size="middle">
-                        <a onClick={() => this.edit(record.username)}>Edit</a>
-                        <Popconfirm title="Are you sure you want to delete this product?"
-                                    onConfirm={() => this.remove(record.username)}>
-                            <a style={{color:"red"}}>Delete</a>
-                        </Popconfirm>
-                    </Space>
-                );
-            },
-        }
-    ];
 
     isEditing = (record) => {
         return record.username === this.state.editingKey;
     };
 
     edit(username) {
-        console.log("kliknut je edit na korisnika "+JSON.stringify(username));
         this.setState({editingKey:username});
     }
 
@@ -68,18 +39,15 @@ class EmployeesPage extends Component {
         this.setState({ editingKey: ""});
     };
     componentDidMount() {
-        this.setState({ loading: true });
         const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
         API.get(`users/all`,{ headers: { Authorization: token}})
             .then(res => {
-                // console.log(res.data._embedded.productList);
                 const employees = res.data._embedded.employeeInfoDtoList;
-                this.setState({loading: false,data:employees });
+                this.setState({loading: false,data:employees, token:token });
             })
     }
     async remove(username) {
-        const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-        API.delete(`/users/${username}`,{ headers: { Authorization: token}})
+        API.delete(`/users/${username}`,{ headers: { Authorization: this.state.token}})
             .then(() => {
                 let updatedProducts = [...this.state.data].filter(i => i.username !== username);
                 this.setState({data: updatedProducts});
@@ -103,7 +71,7 @@ class EmployeesPage extends Component {
                 ...row
             });
             const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-            const response = API.put(`/users/${username}/update`, row,{ headers: { Authorization: token}})
+            API.put(`/users/${username}/update`, row,{ headers: { Authorization: token}})
                 .then((response) => {
                     this.setState({ data: newData, editingKey: ""});
                     this.successfullyAdded("Empolyee info is updated")
@@ -139,7 +107,30 @@ class EmployeesPage extends Component {
                 cell: EditableTableCell
             }
         };
-        const columns = this.columns.map(col => {
+        const columns = employeesDataColumns.map(col => {
+            if (col.dataIndex === 'actions') {
+                return {
+                    ...col,
+                    render: (text, record) => {
+                        const editable = this.isEditing(record);
+                        return editable ? (
+                            <span>
+                                <EditableContext.Consumer>
+                                    {(form) => ( <Typography.Link onClick={() => this.saveData(form, record.username)} style={{ marginRight: 8 }}>Save</Typography.Link> )}
+                                </EditableContext.Consumer>
+                                <Typography.Link  onClick={this.cancel}>Cancel</Typography.Link>
+                </span>
+                        ) : (
+                            <Space size='middle'>
+                                <Typography.Link disabled={this.state.editingKey !== ''} onClick={() => this.edit(record.username)}>Edit</Typography.Link>
+                                <Popconfirm title='Are you sure you want to delete this employee?' onConfirm={() => this.remove(record.username)}>
+                                    <Typography.Link disabled={this.state.editingKey !== ''} type="danger">Delete</Typography.Link>
+                                </Popconfirm>
+                            </Space>
+                        );
+                    }
+                };
+            }
             if (!col.editable) {
                 return col;
             }
@@ -156,7 +147,6 @@ class EmployeesPage extends Component {
                     };
                     return {
                         record,
-                        // inputType: col.dataIndex === "age" ? "number" : "text",
                         inputType: checkInput(col.dataIndex),
                         dataIndex: col.dataIndex,
                         title: col.title,
@@ -175,11 +165,7 @@ class EmployeesPage extends Component {
                     </Link>
                 </div>
                 <Content>
-                    {/*<div style={{marginBottom:"1em"}}>*/}
-                    {/*    <Search placeholder="Search products by name" onSearch={this.onSearch}  />*/}
-                    {/*</div>*/}
-                    <AsijaTest/>
-                    <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey={data.username} rowClassName="editable-row"/>
+                    <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="username" rowClassName="editable-row"/>
                 </Content>
             </Layout>
         );

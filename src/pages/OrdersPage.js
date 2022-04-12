@@ -1,9 +1,8 @@
 import React, {Component} from 'react';
 import {ordersDataColumns} from "../tableColumnsData/ordersDataColumns";
 import EditableTableRow, {EditableContext} from "../components/EditableTableRow";
-import { Form } from '@ant-design/compatible';
 import '@ant-design/compatible/assets/index.css';
-import { Badge, Button, Layout, notification, Popconfirm, Select, Space, Table } from "antd";
+import {Button, Layout, notification, Popconfirm, Select, Space, Table, Typography} from "antd";
 import API from "../server-apis/api";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import EditableTableCell from "../components/EditableTableCell";
@@ -14,74 +13,24 @@ import Search from "antd/es/input/Search";
 class OrdersPage extends Component {
     constructor(props) {
         super(props);
+        this.state = {
+            data: [],
+            // pagination: {
+            //     current: 1,
+            //     pageSize: 10,
+            // },
+            loading: false,
+            editingKey: "",
+            errorMessage:""
+        };
+        this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
         this.onSearch = this.onSearch.bind(this);
     }
-    state = {
-        data: [],
-        // pagination: {
-        //     current: 1,
-        //     pageSize: 10,
-        // },
-        loading: false,
-        editingKey: "",
-        errorMessage:""
-    };
-    columns = [
-        ...ordersDataColumns,
-        {
-            title: "Status",
-            dataIndex: "status",
-            key: "status",
-            editable: false,
-            render:(status,record)=>{
-                return(
-                    <Select defaultValue={status} mode="single"  style={{ width: 120 }} onChange={this.changeOrderStatus.bind(this,record.id)}>
-                        <Select.Option value="WAITING">Waiting</Select.Option>
-                        <Select.Option value="IN_PROGRESS">In Progress</Select.Option>
-                        <Select.Option value="COMPLETED">Completed</Select.Option>
-                        <Select.Option value="CANCELLED">Cancelled</Select.Option>
-                    </Select>
-                )
-            }
-        },
-        {
-            title: "Actions",
-            dataIndex: "actions",
-            width: "10%",
-            render: (text, record) => {
-                const editable = this.isEditing(record);
-                return (
-                    <div>
-                        {editable ? (
-                            <span>
-                                <EditableContext.Consumer>
-                                  {form => (<a onClick={() => this.saveData(form, record.id)} style={{ marginRight: 8 }}>Save</a>)}
-                                </EditableContext.Consumer>
-                                <a onClick={this.cancel}>Cancel</a>
-                            </span>
-                        ) : (
-                            <Space size="middle">
-                                {/*<a onClick={() => this.edit(record.id)}>Edit</a>*/}
-                                    <Link to={`${record.id}`}>
-                                        <span>Edit</span>
-                                    </Link>
-                                <Popconfirm title="Are you sure you want to delete this order?"
-                                            onConfirm={() => this.remove(record.id)}>
-                                    <a style={{color:"red"}}>Delete</a>
-                                </Popconfirm>
-                            </Space>
-                        )}
-                    </div>
-                );
-            }
-        }
-    ];
+
     handleChange(value) {
-        console.log(`selected ${value}`);
         const params = new URLSearchParams();
         params.append('status', value);
-        const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-        API.get(`orders/filter-order-status`,{  params: { status: value },headers: { Authorization: token}})
+        API.get(`orders/filter-order-status`,{  params: { status: value },headers: { Authorization: this.token}})
             .then((res) => {
                 console.log(res.data._embedded.ordersDtoList);
            //     this.state.data=res.data._embedded.ordersDtoList;
@@ -114,24 +63,15 @@ class OrdersPage extends Component {
         }
     }
     changeOrderStatus(id,value){
-        console.log("value>>>",value);
-        console.log("id>>>",id);
         const params = new URLSearchParams();
         params.append('status', value);
-        const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-        API.patch(`orders/change-status/${id}`,params,{ headers: { Authorization: token}})
+        API.patch(`orders/change-status/${id}`,params,{ headers: { Authorization: this.token}})
             .then(res => {
                 const index = this.state.data.findIndex(order => order.id === id), orders = [...this.state.data] // important to create a copy, otherwise you'll modify state outside of setState call
                 orders[index] = res.data;
                 this.setState({data: orders});
+                this.successfullyAdded("Order status has been changed");
             });
-    }
-    isEditing = record => {
-        return record.id === this.state.editingKey;
-    };
-
-    edit(id) {
-        this.setState({ editingKey: id });
     }
 
     cancel = () => {
@@ -139,16 +79,14 @@ class OrdersPage extends Component {
     };
     componentDidMount() {
         this.setState({ loading: true });
-        const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-        API.get(`orders`,{ headers: { Authorization: token}})
+        API.get(`orders`,{ headers: { Authorization: this.token}})
             .then(res => {
                 const orders = res.data._embedded.ordersDtoList;
                 this.setState({loading: false,data:orders });
             });
     }
     async remove(id) {
-        const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-        API.delete(`/orders/${id}`,{ headers: { Authorization: token}})
+        API.delete(`/orders/${id}`,{ headers: { Authorization: this.token}})
             .then(() => {
                 let updatedOrders = [...this.state.data].filter(i => i.id !== id);
                 this.setState({data: updatedOrders});
@@ -173,8 +111,7 @@ class OrdersPage extends Component {
                 ...item,
                 ...row
             });
-            const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-            const response = API.put(`/orders/update/${id}`, row,{headers: { Authorization: token}})
+            API.put(`/orders/update/${id}`, row,{headers: { Authorization: this.token}})
                 .then((response )=>
                 {
                     this.setState({ data: newData, editingKey: "" });
@@ -196,8 +133,7 @@ class OrdersPage extends Component {
             else{
                 const params = new URLSearchParams();
                 params.append('id', value);
-                const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-                API.get(`orders/search/`, { params: { id: value },headers: { Authorization: token}})
+                API.get(`orders/search/`, { params: { id: value },headers: { Authorization: this.token}})
                     .then(res => {
                         this.state.data=[];
                         this.state.data.push(res.data);
@@ -218,7 +154,6 @@ class OrdersPage extends Component {
             icon: <CheckCircleFilled style={{ color: '#0AC035' }} />
         });
     };
-
     errorHappend = (error) => {
         notification.info({
             message: `Notification`,
@@ -228,8 +163,6 @@ class OrdersPage extends Component {
             icon: <InfoCircleFilled style={{ color: '#f53333' }} />
         });
     };
-
-
     render() {
         const components = {
             body: {
@@ -237,7 +170,38 @@ class OrdersPage extends Component {
                 cell: EditableTableCell
             }
         };
-        const columns = this.columns.map(col => {
+        const columns = ordersDataColumns.map(col => {
+            if (col.dataIndex === 'status') {
+                return {
+                    ...col,
+                    render: (status, record) => {
+                        return(
+                        <Select defaultValue={status} mode="single"  style={{ width: 120 }} onChange={this.changeOrderStatus.bind(this,record.id)}>
+                            <Select.Option value="WAITING">Waiting</Select.Option>
+                            <Select.Option value="IN_PROGRESS">In Progress</Select.Option>
+                            <Select.Option value="COMPLETED">Completed</Select.Option>
+                            <Select.Option value="CANCELLED">Cancelled</Select.Option>
+                        </Select>
+                        )
+                    }}
+            }
+            if (col.dataIndex === 'actions') {
+                return {
+                    ...col,
+                    render: (text, record) => {
+                        return(
+                            <Space size='middle'>
+                                <Link to={`${record.id}`}>
+                                    <span>Edit</span>
+                                </Link>
+                                <Popconfirm title='Are you sure you want to delete this product?' onConfirm={() => this.remove(record.id)}>
+                                    <Typography.Link disabled={this.state.editingKey !== ''} type="danger">Delete</Typography.Link>
+                                </Popconfirm>
+                            </Space>
+                        );
+                    }
+                };
+            }
             if (!col.editable) {
                 return col;
             }
@@ -254,7 +218,6 @@ class OrdersPage extends Component {
                     };
                     return {
                         record,
-                        // inputType: col.dataIndex === "age" ? "number" : "text",
                         inputType: checkInput(col.dataIndex),
                         dataIndex: col.dataIndex,
                         title: col.title,

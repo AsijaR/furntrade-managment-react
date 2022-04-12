@@ -1,5 +1,3 @@
-import moment from "moment";
-
 export const orderedProductsDataColumns = [
     {
         title: "Id",
@@ -39,5 +37,10 @@ export const orderedProductsDataColumns = [
         key: "quantity",
         width: "15%",
         editable: true
+    },
+    {
+        title: 'Actions',
+        dataIndex: 'actions',
+        width: '10%',
     }
 ];

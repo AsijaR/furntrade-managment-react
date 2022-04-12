@@ -7,6 +7,7 @@ import {EditableContext} from "./EditableTableRow";
 
 const FormItem = Form.Item;
 const Option = Select.Option;
+
 class EditableTableCell extends Component {
     getInput = (record, dataIndex, title, getFieldDecorator) => {
         switch (this.props.inputType) {

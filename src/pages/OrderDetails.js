@@ -80,7 +80,7 @@ class OrderDetails extends Component {
         let url = window.location.pathname;
         if(url!=="/orders/create-new-order")
         {
-            var currentCustomer="";
+            // var currentCustomer="";
             var orderId = url.substring(url.lastIndexOf('/') + 1);
             this.setState({orderId:orderId})
             await API.get(`orders/${orderId}`,{ headers: { Authorization: this.token}})
@@ -98,7 +98,7 @@ class OrderDetails extends Component {
                                 quantity: p.quantity,
                             }
                         })
-                        currentCustomer=orderDetails.customer.name;
+                       // currentCustomer=orderDetails.customer.name;
                         this.setState({
                             isLoaded: true,
                             isNewOrder:false,

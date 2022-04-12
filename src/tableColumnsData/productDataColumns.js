@@ -33,8 +33,14 @@ export const productDataColumns = [
     {
         title: "Price",
         dataIndex: "price",
+        width: '10%',
         key: "price",
         className: 'column-money',
         editable: true
+    },
+    {
+        title: 'Actions',
+        dataIndex: 'actions',
+        width: '10%',
     }
 ];

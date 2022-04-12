@@ -1,23 +1,10 @@
 import moment from 'moment';
-import {Select} from "antd";
 import API from "../server-apis/api";
+import {Typography} from "antd";
 
-function changeOrderStatus(value, id){
-    console.log("value>>>",value);
-    console.log("id>>>",id);
-
-    // const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-    // API.patch(`orders/change-status/`,id,{ headers: { Authorization: token}})
-    //     .then(res => {
-    //         // console.log(res.data._embedded.productList);
-    //         const orders = res.data._embedded.ordersDtoList;
-    //         this.setState({loading: false,data:orders });
-    //     });
-}
 function orderDetails(orderId){
-    console.log("value>>>",orderId);
     const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-    const response = API.get(`/orders/${orderId}`,{headers: { Authorization: token}})
+    API.get(`/orders/${orderId}`,{headers: { Authorization: token}})
         .then((response )=>
         {
             const orderDetails = response.data;
@@ -35,7 +22,7 @@ export const ordersDataColumns = [
         dataIndex: "id",
         key: "id",
         width: "6%",
-        render: orderId => <a onClick={() => orderDetails(orderId)}>{orderId}</a>,
+        render: orderId => <Typography.Link onClick={() => orderDetails(orderId)}>{orderId}</Typography.Link>,
         editable: false
     },
     {
@@ -71,5 +58,16 @@ export const ordersDataColumns = [
         dataIndex: "contactPersonName",
         key: "contactPersonName",
         editable: false
+    },
+    {
+        title: "Status",
+        dataIndex: "status",
+        key: "status",
+        editable: false,
+    },
+    {
+        title: 'Actions',
+        dataIndex: 'actions',
+        width: '10%',
     }
 ];
