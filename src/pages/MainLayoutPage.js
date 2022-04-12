@@ -15,6 +15,7 @@ import authService from "../services/auth.service";
 import LoginPage from "./LoginPage";
 import { useHistory } from "react-router-dom";
 import OrderDetails from "./OrderDetails";
+import AddEmployeePage from "./AddEmployeePage";
 
 
 class MainLayoutPage extends Component {
@@ -96,6 +97,8 @@ class MainLayoutPage extends Component {
                                         <Route path="/customers"  element={<CustomersPage />} />
                                         {this.state.hasAdminRole &&
                                         ( <Route path="/add-customer"  element={<AddCustomerPage />} />)}
+                                        {this.state.hasAdminRole &&
+                                        ( <Route path="/add-employee"  element={<AddEmployeePage />} />)}
                                         <Route path="/orders" element={  <OrdersPage/>}/>
                                         <Route path="/employees" element={  <EmployeesPage/>}/>
                                         <Route path="/my-profile" element={  <SettingsPage/>}/>

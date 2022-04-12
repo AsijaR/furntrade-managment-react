@@ -133,12 +133,12 @@ class SettingsPage extends Component {
                     <Col span={10}>
                         <Text style={{fontSize:"22px"}} >Change password</Text>
                         <Form onFinish={this.onFinishNewPassword} onFinishFailed={this.onFinishNewPasswordFailed} autoComplete="off">
-                            <Form.Item label="Current password" name="currentPassword" rules={[ {required: true,message:"Please insert your current name"},{
+                            <Form.Item label="Current password" name="currentPassword" rules={[ {required: true,message:"Please insert your current password"},{
                                 pattern: /^[a-zA-Z0-9!@.,?#\$%\^&\* ]+$/,
                                 message: 'Note can only include letters',} ]}>
                                 <Input.Password/>
                             </Form.Item>
-                            <Form.Item label="New password" name="newPassword1" hasFeedback rules={[ {required: true,message:"Please insert your new name"},{
+                            <Form.Item label="New password" name="newPassword1" hasFeedback rules={[ {required: true,message:"Please insert your new password"},{
                                 pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@.?#\$%\^&\*])(?=.{8,})/,
                                 message: 'Password needs to inlude at least one lowercase, uppercase, numeric and special character and to be at least 8 characters long',} ]}>
                                 <Input.Password/>

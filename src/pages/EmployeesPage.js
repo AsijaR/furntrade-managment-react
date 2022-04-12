@@ -159,7 +159,7 @@ class EmployeesPage extends Component {
         return (
             <Layout>
                 <div>
-                    <Link to="/add-product">
+                    <Link to="/add-employee">
                         <Button style={{float:"right", background: "#0AC035",marginBottom:"1em", marginTop:"1em" }}
                                 type="primary">New emplyee</Button>
                     </Link>

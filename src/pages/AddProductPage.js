@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
-import { Form } from '@ant-design/compatible';
 import '@ant-design/compatible/assets/index.css';
-import { Button, Card, Input, InputNumber, Layout, notification } from "antd";
+import { Button,Form, Card, Input, InputNumber, Row,Col, notification } from "antd";
 import {Content} from "antd/es/layout/layout";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import API from "../server-apis/api";
@@ -9,11 +8,10 @@ import API from "../server-apis/api";
 class AddProductPage extends Component {
     constructor(props) {
         super(props);
-        this.onFinish = this.onFinish.bind(this);
+        this.token="Bearer "+ JSON.parse(localStorage.getItem("token"));
     }
     onFinish = (values) => {
-        const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-        API.post(`/products/add`,values,{ headers: { Authorization: token}})
+        API.post(`/products/add`,values,{ headers: { Authorization: this.token}})
             .then((res) => {
                 this.successfullyAdded();
             })
@@ -46,49 +44,48 @@ class AddProductPage extends Component {
     };
     render() {
         return (
-            <Layout style={{alignItems: 'center',marginTop:"2em"}}>
-                <Content >
-                    <Card title="Add new product info" style={{ width: "60em" }}>
-                    <Form name="addProductForm"
-                          layout="vertical"
-                          initialValues={{  remember: true,}}
-                          onFinish={this.onFinish}
-                          onFinishFailed={this.onFinishFailed}
-                          autoComplete="off">
-                    <Form.Item label="Name" name="name" rules={[ {required: true,message: 'Please enter name',}, ]}>
-                        <Input />
-                    </Form.Item>
+            <Row style={{marginTop:"2em", marginLeft:"1em"}}>
+                <Col span={12} offset={6}>
+                    <Card title="Add new product info">
+                        <Form name="addProductForm" layout="vertical" onFinish={this.onFinish} onFinishFailed={this.onFinishFailed} autoComplete="off">
+                            <Form.Item label="Name" name="name" rules={[ {required: true,message: 'Please enter name',},{
+                                pattern: /^[a-zA-Z0-9.# ]+$/,
+                                message: 'Name can only include letters or numbers',}]}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item label="Model" name="model" rules={[ {required: true,message: 'Please enter model',},{
+                                pattern: /^[a-zA-Z0-9.# ]+$/,
+                                message: 'Model can only include letters or numbers',}]}>
+                                <Input />
+                            </Form.Item>
 
-                    <Form.Item label="Model" name="model" rules={[ {required: true,message: 'Please enter model',}, ]}>
-                        <Input />
-                    </Form.Item>
+                            <Form.Item label="Color" name="color" rules={[ {required: true,message: 'Please enter color',}, {
+                                pattern: /^[a-zA-Z0-9.# ]+$/,
+                                message: 'Model can only include letters or numbers',}]}>
+                                <Input />
+                            </Form.Item>
 
-                    <Form.Item label="Color" name="color" rules={[ {required: true,message: 'Please enter color',}, ]}>
-                        <Input />
-                    </Form.Item>
+                            <Form.Item label="Material" name="material" rules={[ {required: true,message: 'Please enter material',}, {
+                                pattern: /^[a-zA-Z0-9.# ]+$/,
+                                message: 'Material can only include letters or numbers',}]}>
+                                <Input />
+                            </Form.Item>
 
-                    <Form.Item label="Material" name="material" rules={[ {required: true,message: 'Please enter material',}, ]}>
-                        <Input />
-                    </Form.Item>
+                            <Form.Item label="Price" name="price" rules={[{ required: true, message: 'Please enter price',},{
+                                pattern: /^[0-9 ]+$/,
+                                message: 'Name can only include numbers',}]}>
+                                <InputNumber min={0} />
+                            </Form.Item>
 
-                    <Form.Item label="Price" name="price" rules={[
-                        {
-                            required: true,
-                            message: 'Please enter price',
-                        },
-                    ]}>
-                        <InputNumber min={0} />
-                    </Form.Item>
-
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit" style={{width:"10em"}}>
-                            Save
-                        </Button>
-                    </Form.Item>
-                    </Form>
+                            <Form.Item>
+                                <Button type="primary" htmlType="submit" style={{width:"10em"}}>
+                                    Save
+                                </Button>
+                            </Form.Item>
+                        </Form>
                     </Card>
-                </Content>
-            </Layout>
+                </Col>
+            </Row>
         );
     }
 }
