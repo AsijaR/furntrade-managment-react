@@ -7,6 +7,7 @@ import EditableTableCell from "../components/EditableTableCell";
 import API from "../server-apis/api";
 import {employeesDataColumns} from "../tableColumnsData/employeesDataColumns";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
+import Text from "antd/es/typography/Text";
 
 
 class EmployeesPage extends Component {
@@ -17,14 +18,9 @@ class EmployeesPage extends Component {
             error: null,
             loading: true,
             editingKey: "",
+            errorMessage:null
         }
-
         this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
-        // this.onFinish = this.onFinish.bind(this);
-        //  this.onFinishFailed = this.onFinishFailed.bind(this);
-        //this.handler = this.handler.bind(this)
-        this.columns = [
-            ...employeesDataColumns]
     }
 
     isEditing = (record) => {
@@ -44,7 +40,20 @@ class EmployeesPage extends Component {
             .then(res => {
                 const employees = res.data._embedded.employeeInfoDtoList;
                 this.setState({loading: false,data:employees, token:token });
-            })
+            }).
+        catch((error)=>{
+            var message=JSON.stringify(error.response.data.error_message);
+            if(message.includes("The Token has expired"))
+            {
+                this.setState({errorMessage:"Your token has expired"})
+            }
+            else
+            {
+                this.setState({errorMessage:error})
+            }
+            this.errorHappend("Failed to delete");
+            console.error('There was an error!', error);
+        });
     }
     async remove(username) {
         API.delete(`/users/${username}`,{ headers: { Authorization: this.state.token}})
@@ -52,7 +61,20 @@ class EmployeesPage extends Component {
                 let updatedProducts = [...this.state.data].filter(i => i.username !== username);
                 this.setState({data: updatedProducts});
                 this.successfullyAdded("Employee is deleted. It wont have any access to the website anymore.")
-            }).catch(()=>this.errorHappend("Failed to delete"));
+            })
+            .catch((error)=>{
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
+                this.errorHappend("Failed to delete");
+                console.error('There was an error!', error);
+        });
     }
 
     hasWhiteSpace(s) {
@@ -70,15 +92,22 @@ class EmployeesPage extends Component {
                 ...item,
                 ...row
             });
-            const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
-            API.put(`/users/${username}/update`, row,{ headers: { Authorization: token}})
+            API.put(`/users/${username}/update`, row,{ headers: { Authorization: this.state.token}})
                 .then((response) => {
                     this.setState({ data: newData, editingKey: ""});
                     this.successfullyAdded("Empolyee info is updated")
                 })
                 .catch(error => {
-                    this.setState({ errorMessage: error.message });
-                    this.errorHappend("Failed to save changes.")
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"})
+                    }
+                    else
+                    {
+                        this.setState("Failed to save changes")
+                    }
+                    this.errorHappend(error);
                     console.error('There was an error!', error);
                 });
         });
@@ -156,6 +185,15 @@ class EmployeesPage extends Component {
             };
         });
         const { data, loading } = this.state;
+        if (this.state.errorMessage) {
+            return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+                <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
+                {this.state.errorMessage.includes("token")&&(<Link to="/login">
+                    <Button>Click here to login again</Button>
+                </Link>)}
+            </Space>;
+        } else
+        {
         return (
             <Layout>
                 <div>
@@ -169,7 +207,7 @@ class EmployeesPage extends Component {
                 </Content>
             </Layout>
         );
-    }
+    }}
 }
 
 export default EmployeesPage;

@@ -1,14 +1,16 @@
 import React, {Component} from 'react';
-import {Form, Button, InputNumber, Select, notification} from "antd";
+import {Form, Button, InputNumber, Select, notification, Space} from "antd";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import API from "../server-apis/api";
+import Text from "antd/es/typography/Text";
+import {Link} from "react-router-dom";
 
 class AddNewProductsToOrder extends Component {
     constructor(props) {
         super(props);
         this.state= {
             data: [],
-            error: null
+            errorMessage: null
         };
         this.onFinish=this.onFinish.bind(this);
     }
@@ -34,9 +36,18 @@ class AddNewProductsToOrder extends Component {
                     this.successfullyAdded("Product is successfully added to the order.");
                 })
                 .catch(error => {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"})
+                    }
+                    else
+                    {
+                        this.setState({errorMessage:error})
+                    }
                     if(error.response.status===403)
                         this.errorHappend("Product already exists in the order.");
-                    else  this.errorHappend(error);// this.setState({ errorMessage: error.message });
+                    else this.errorHappend("Failed to save");
                     console.error('There was an error!', error);
                 });
         }
@@ -59,13 +70,21 @@ class AddNewProductsToOrder extends Component {
                 (res) => {
                     const products = res.data._embedded.productList;
                     this.setState({data:products });
-                },
-                (error) => {
-                    this.setState({
-                        error
-                    });
                 }
             )
+            .catch(error => {
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
+                this.errorHappend("Failed to load data");
+                console.error('There was an error!', error);
+            });
     }
     successfullyAdded = (message) => {
         notification.info({
@@ -85,7 +104,7 @@ class AddNewProductsToOrder extends Component {
         });
     };
     render() {
-        const { error, data } = this.state;
+        const { errorMessage,data } = this.state;
         let options = []
         if (data.length > 0) {
             data.forEach(role => {
@@ -95,9 +114,14 @@ class AddNewProductsToOrder extends Component {
                 options.push(roleDate)
             })
         }
-        if (error) {
-            return <div>Error: {error.message}</div>;
-        }  else {
+        if (errorMessage) {
+            return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+                <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
+                {errorMessage.includes("token")&&(<Link to="/login">
+                    <Button>Click here to login again</Button>
+                </Link>)}
+            </Space>;
+        }else {
             return (
             <div>
                 <Form onFinish={this.onFinish} autoComplete="off">

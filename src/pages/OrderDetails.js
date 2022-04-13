@@ -5,6 +5,7 @@ import API from "../server-apis/api";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import OrderedProductsTable from "../components/OrderedProductsTable";
 import AddNewProductsToOrder from "../components/AddNewProductsToOrder";
+import {Link} from "react-router-dom";
 const { Text } = Typography;
 
 class OrderDetails extends Component {
@@ -20,7 +21,7 @@ class OrderDetails extends Component {
             totalOrderPrice:0,
             initialFormValues:[],
             isNewOrder:true,
-            error: null,
+            errorMessage: null,
             isLoaded: false,
             isModalVisible:false
         }
@@ -87,7 +88,6 @@ class OrderDetails extends Component {
                 .then(
                     (res) => {
                         const orderDetails = res.data;
-                        //   console.log(orderDetails)
                         let orderedProducts=orderDetails.orderedProducts.map((p)=>{
                             return {
                                 id: p.product.id,
@@ -98,7 +98,6 @@ class OrderDetails extends Component {
                                 quantity: p.quantity,
                             }
                         })
-                       // currentCustomer=orderDetails.customer.name;
                         this.setState({
                             isLoaded: true,
                             isNewOrder:false,
@@ -124,7 +123,19 @@ class OrderDetails extends Component {
                             error
                         });
                     }
-                )
+                ).catch(error => {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"})
+                    }
+                    else
+                    {
+                        this.setState({errorMessage:error})
+                    }
+                    this.errorHappend("Failed to load data");
+                    console.error('There was an error!', error);
+                });
         }
         else{
             this.setState({isLoaded:true,
@@ -147,14 +158,21 @@ class OrderDetails extends Component {
                            name=x.fullName;
                     })
                     this.setState({customers:fullNameArray,selectedCustomer:name});
-                },
-                (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error
-                    });
                 }
             )
+            .catch(error => {
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
+                this.errorHappend("Failed to load data");
+                console.error('There was an error!', error);
+            });
     }
     createNewOrder(customerName,values)
     {
@@ -184,16 +202,21 @@ class OrderDetails extends Component {
                 console.log(res);
             })
             .catch(error => {
-                // this.setState({ errorMessage: error.message });
-                this.errorHappend(error);
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
+                this.errorHappend("Failed to save");
                 console.error('There was an error!', error);
             });
     }
     onFinish = (values) => {
-
-       // const selectedCustomer=this.state.customers.find(({id})=>id===values.customer);
         var customerName=this.state.selectedCustomer.split(",")[0];
-        console.log("wfwf"+customerName);
         if(this.state.isNewOrder)
         {
             this.createNewOrder(customerName,values)
@@ -213,11 +236,18 @@ class OrderDetails extends Component {
                     this.successfullyAdded("Order is updated");
                 })
                 .catch(error => {
-                    // this.setState({ errorMessage: error.message });
-                    this.errorHappend(error);
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"})
+                    }
+                    else
+                    {
+                        this.setState({errorMessage:error})
+                    }
+                    this.errorHappend("Failed to save");
                     console.error('There was an error!', error);
-                });
-            //console.log("nije"+JSON.stringify(order));
+                });;
         }
     };
     onFinishFailed = (errorInfo) => {
@@ -251,7 +281,7 @@ class OrderDetails extends Component {
         })
     };
     render() {
-        const { error, isLoaded, data,totalOrderPrice,initialFormValues,isNewOrder,customers,products,isModalVisible } = this.state;
+        const { errorMessage, isLoaded, data,totalOrderPrice,initialFormValues,isNewOrder,customers,products,isModalVisible } = this.state;
         let header;
         if(!isNewOrder){
             header=<Text mark style={{fontSize:"22px"}} >Order id: {data.id}</Text>;
@@ -268,8 +298,13 @@ class OrderDetails extends Component {
                 options.push(roleDate)
             })
         }
-        if (error) {
-            return <div>Error: {error.message}</div>;
+        if (errorMessage) {
+            return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+                <Text style={{fontSize:"22px"}}>Error: {errorMessage}</Text>
+                {errorMessage.includes("token")&&(<Link to="/login">
+                    <Button>Click here to login again</Button>
+                </Link>)}
+            </Space>;
         } else if (!isLoaded) {
             return <div>Loading...</div>;
         } else {

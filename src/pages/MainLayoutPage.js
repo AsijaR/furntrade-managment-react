@@ -5,7 +5,7 @@ import CustomersPage from "./CustomersPage";
 import OrdersPage from "./OrdersPage";
 import SettingsPage from "./SettingsPage";
 import Sider from "antd/es/layout/Sider";
-import {Menu} from "antd";
+import {Menu, Space} from "antd";
 import {BrowserRouter as Router, Route, Link, Routes , Navigate} from "react-router-dom";
 import {FaBuilding, FaCouch, FaUsers, IoDocumentText, IoLogOut, IoMdSettings} from "react-icons/all";
 import AddProductPage from "./AddProductPage";
@@ -16,6 +16,7 @@ import LoginPage from "./LoginPage";
 import { useHistory } from "react-router-dom";
 import OrderDetails from "./OrderDetails";
 import AddEmployeePage from "./AddEmployeePage";
+import Text from "antd/es/typography/Text";
 
 
 class MainLayoutPage extends Component {
@@ -30,7 +31,6 @@ class MainLayoutPage extends Component {
 
 }
     isUserLoggedOrTokenExpired=()=>{
-        console.log("tu sam sad");
         if(authService.getCurrentUser()===null)
         {
             window.location.reload(false);
@@ -112,6 +112,16 @@ class MainLayoutPage extends Component {
                     </Layout>
                 </Router>
             );
+        }
+        else
+        {
+            return(
+            <Space>
+                <Text>You need to login to access this page</Text>
+                <Link to="/login">
+                    <span>Go to login page</span>
+                </Link>
+            </Space>)
         }
     }
 }

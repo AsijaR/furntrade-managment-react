@@ -8,6 +8,7 @@ import EditableTableCell from "../components/EditableTableCell";
 import {Link} from "react-router-dom";
 import authService from "../services/auth.service";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
+import Text from "antd/es/typography/Text";
 
 class CustomersPage extends Component {
     constructor() {
@@ -15,7 +16,8 @@ class CustomersPage extends Component {
         this.state = {
             data: [],
             loading: false,
-            editingKey: ""
+            editingKey: "",
+            errorMessage:null
         };
         this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
     }
@@ -43,6 +45,19 @@ class CustomersPage extends Component {
                 const customers = res.data._embedded.customerList;
                 this.setState({loading: false,data:customers });
             })
+            .catch((error)=>{
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
+                this.errorHappend(error);
+                console.error('There was an error!', error);
+        });
     }
     async remove(id) {
         API.delete(`/customers/${id}`,{ headers: { Authorization: this.token}})
@@ -50,7 +65,20 @@ class CustomersPage extends Component {
                 let updatedCustomers = [...this.state.data].filter(i => i.id !== id);
                 this.setState({data: updatedCustomers});
                 this.successfullyAdded("Customer is deleted");
-            }).catch(()=>this.errorHappend("Failed to deleted"));
+            })
+            .catch((error)=>{
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
+                this.errorHappend("Failed to delete");
+                console.error('There was an error!', error);
+            });
     }
     saveData(form,id) {
         form.validateFields((error, row) => {
@@ -70,8 +98,16 @@ class CustomersPage extends Component {
                     this.successfullyAdded("Customer is updated");
                 })
                 .catch(error => {
-                    this.setState({ errorMessage: error.message });
-                    this.errorHappend("Failed to save.")
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"})
+                    }
+                    else
+                    {
+                        this.setState({errorMessage:error})
+                    }
+                    this.errorHappend("Failed to save");
                     console.error('There was an error!', error);
                 });
         });
@@ -149,6 +185,15 @@ class CustomersPage extends Component {
             };
         });
         const { data, loading } = this.state;
+        if (this.state.errorMessage) {
+            return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+                <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
+                {this.state.errorMessage.includes("token")&&(<Link to="/login">
+                    <Button>Click here to login again</Button>
+                </Link>)}
+            </Space>;
+        } else
+        {
         return (
             <Layout>
                 {this.getUserRole().isAdmin&&(
@@ -163,6 +208,7 @@ class CustomersPage extends Component {
                 </Content>
             </Layout>
         );
+    }
     }
 }
 

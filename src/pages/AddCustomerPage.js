@@ -1,14 +1,17 @@
 import React, {Component} from 'react';
 import API from "../server-apis/api";
 import '@ant-design/compatible/assets/index.css';
-import { Button,Form,Row,Col, Card, Input, InputNumber, Layout, notification, Space } from "antd";
+import { Button,Form,Row,Col, Card, Input, InputNumber, notification, Space } from "antd";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
-import {Content} from "antd/es/layout/layout";
 import Text from "antd/es/typography/Text";
+import {Link} from "react-router-dom";
 
 class AddCustomerPage extends Component {
     constructor(props) {
         super(props);
+        this.state={
+            errorMessage:null
+        }
         this.token="Bearer "+ JSON.parse(localStorage.getItem("token"));
         this.onFinish = this.onFinish.bind(this);
     }
@@ -18,6 +21,15 @@ class AddCustomerPage extends Component {
                 this.successfullyAdded();
             })
             .catch(error => {
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
                 this.errorHappend(error);
                 console.error('There was an error!', error);
             });
@@ -44,7 +56,16 @@ class AddCustomerPage extends Component {
         });
     };
     render() {
-        return (
+        if (this.state.errorMessage) {
+            return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+                <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
+                <Link to="/login">
+                    <Button>Click here to login again</Button>
+                </Link>
+                </Space>;
+        } else
+        {
+            return (
                     <Form name="addProductForm" layout="vertical" onFinish={this.onFinish} onFinishFailed={this.onFinishFailed} autoComplete="off" >
                         <Row>
                             <Text style={{fontSize:"22px"}} >Add info about new customer</Text>
@@ -106,7 +127,8 @@ class AddCustomerPage extends Component {
                         </Row>
                     </Form>
 
-        );
+            );
+        }
     }
 }
 

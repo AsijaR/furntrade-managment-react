@@ -1,12 +1,17 @@
 import React, {Component} from 'react';
 import '@ant-design/compatible/assets/index.css';
-import { Button,Form, Card, Input, Row,Col, notification } from "antd";
+import {Button, Form, Card, Input, Row, Col, notification, Space} from "antd";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import API from "../server-apis/api";
+import {Link} from "react-router-dom";
+import Text from "antd/es/typography/Text";
 
 class AddEmployeePage extends Component {
     constructor(props) {
         super(props);
+        this.state={
+            errorMessage:null
+        }
         this.token="Bearer "+ JSON.parse(localStorage.getItem("token"));
     }
     onFinish = (values) => {
@@ -16,6 +21,15 @@ class AddEmployeePage extends Component {
             })
             .catch(error => {
                 // this.setState({ errorMessage: error.message });
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
                 this.errorHappend(error);
                 console.error('There was an error!', error);
             });
@@ -42,6 +56,15 @@ class AddEmployeePage extends Component {
         });
     };
     render() {
+        if (this.state.errorMessage) {
+            return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+                <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
+                <Link to="/login">
+                    <Button>Click here to login again</Button>
+                </Link>
+            </Space>;
+        } else
+        {
         return (
             <Row style={{marginTop:"2em", marginLeft:"1em"}}>
                 <Col span={12} offset={6}>
@@ -67,6 +90,7 @@ class AddEmployeePage extends Component {
                 </Col>
             </Row>
         );
+        }
     }
 }
 

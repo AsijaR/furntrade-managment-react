@@ -1,8 +1,9 @@
 import React, {Component} from 'react';
 import AuthService from "../services/auth.service";
-import {Button, Col, Form, Input, notification, Row, Typography} from "antd";
+import {Button, Col, Form, Input, notification, Row, Space, Typography} from "antd";
 import API from "../server-apis/api";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
+import {Link} from "react-router-dom";
 const { Text } = Typography;
 
 class SettingsPage extends Component {
@@ -12,7 +13,8 @@ class SettingsPage extends Component {
             currentUser: AuthService.getCurrentUser(),
             user:[],
             isLoaded:false,
-            initialFormValues:[]
+            initialFormValues:[],
+            errorMessage:null
         };
         this.token="Bearer "+ JSON.parse(localStorage.getItem("token"));
     }
@@ -29,7 +31,20 @@ class SettingsPage extends Component {
                         email:res.data.email
                     }
                 })
-            });
+            })
+            .catch((error)=>{
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
+                this.errorHappend(error);
+                console.error('There was an error!', error);
+        });
     }
 
     onFinish = (values) => {
@@ -44,11 +59,19 @@ class SettingsPage extends Component {
             .then((res) => {
                 this.successfullyAdded("Your data is successflly changed!");
             })
-            .catch(error => {
-                // this.setState({ errorMessage: error.message });
+            .catch((error)=>{
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
                 this.errorHappend("Upps! Something went wrong. Please try again.");
                 console.error('There was an error!', error);
-            });
+        });
     };
     onFinishFailed = (errorInfo) => {
         console.log('Failed:', errorInfo);
@@ -59,7 +82,16 @@ class SettingsPage extends Component {
             .then((res) => {
                 this.successfullyAdded("Password is successflly changed!");
             })
-            .catch(error => {
+            .catch((error)=>{
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
                 this.errorHappend("Entered current password is wrong.");
                 console.error('There was an error!', error);
             });
@@ -85,10 +117,19 @@ class SettingsPage extends Component {
         });
     };
     render() {
-        const { user,initialFormValues} = this.state;
-        if (!this.state.isLoaded) {
+        const { errorMessage,user,initialFormValues} = this.state;
+        if (errorMessage) {
+            return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+                <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
+                {errorMessage.includes("token")&&(<Link to="/login">
+                    <Button>Click here to login again</Button>
+                </Link>)}
+            </Space>;
+        }
+        else if (!this.state.isLoaded) {
             return <div>Loading...</div>;
-        } else {
+        }
+        else {
         return (
                 <Row style={{marginTop:"2em", marginLeft:"1em"}}>
                     <Col span={10}>
@@ -96,8 +137,6 @@ class SettingsPage extends Component {
                         <Form name="userInfoForm"
                               initialValues={initialFormValues}
                               onFinish={this.onFinish} onFinishFailed={this.onFinishFailed} autoComplete="off">
-                            {/*<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>*/}
-                            {/*    <Col className="gutter-row" span={8}>*/}
                             <div style={{ padding: '8px' }}>
                                 <Form.Item label="First name" name="firstName" rules={[ {required: true,message:"Please insert your first name"},{
                                     pattern: /^[a-zA-Z ]+$/,
@@ -124,9 +163,6 @@ class SettingsPage extends Component {
                                     <Button type="primary" htmlType="submit" style={{width:"10em", marginTop:"2em", marginRight:"4em"}}>Save</Button>
                                 </Form.Item>
                             </div>
-                            {/*    </Col>*/}
-                            {/*    <Divider type="vertical" style={{ height: "22em", backgroundColor: "#7c7d7c" }}/>*/}
-                            {/*</Row>*/}
                         </Form>
                     </Col>
                     <Col span={2}/>

@@ -8,6 +8,7 @@ import EditableTableRow, {EditableContext} from "../components/EditableTableRow"
 import {Link} from "react-router-dom";
 import Search from "antd/es/input/Search";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
+import Text from "antd/es/typography/Text";
 
 class ProductsPage extends Component {
     constructor(props) {
@@ -19,7 +20,8 @@ class ProductsPage extends Component {
             //     pageSize: 10,
             // },
             loading: false,
-            editingKey: ""
+            editingKey: "",
+            errorMessage:null
         };
         this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
         this.onSearch = this.onSearch.bind(this);
@@ -41,10 +43,22 @@ class ProductsPage extends Component {
         this.setState({ loading: true });
         API.get(`products`,{ headers: { Authorization: this.token}})
             .then(res => {
-                // console.log(res.data._embedded.productList);
                 const products = res.data._embedded.productList;
                 this.setState({loading: false,data:products });
-            });
+            })
+            .catch(error => {
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
+                this.errorHappend("Failed to load data");
+                console.error('There was an error!', error);
+        });
     }
 
     async remove(id) {
@@ -53,8 +67,18 @@ class ProductsPage extends Component {
             let updatedProducts = [...this.state.data].filter(i => i.id !== id);
             this.setState({data: updatedProducts});
             this.successfullyAdded("Product is deleted");
-        }).catch((error)=>{
-            this.errorHappend("");
+        }).catch(error => {
+            var message=JSON.stringify(error.response.data.error_message);
+            if(message.includes("The Token has expired"))
+            {
+                this.setState({errorMessage:"Your token has expired"})
+            }
+            else
+            {
+                this.setState({errorMessage:error})
+            }
+            this.errorHappend("Failed to remove");
+            console.error('There was an error!', error);
         });
     }
 
@@ -80,8 +104,16 @@ class ProductsPage extends Component {
                     this.successfullyAdded("Product is updated");
                 })
                 .catch(error => {
-                    this.setState({ errorMessage: error.message });
-                    this.errorHappend("");
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"})
+                    }
+                    else
+                    {
+                        this.setState({errorMessage:error})
+                    }
+                    this.errorHappend("Failed to save");
                     console.error('There was an error!', error);
                 });
         });
@@ -95,7 +127,20 @@ class ProductsPage extends Component {
                 .then(res => {
                     const products = res.data.productList;
                     this.setState({loading: false,data:products });
-                });
+                })
+                .catch(error => {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"})
+                    }
+                    else
+                    {
+                        this.setState({errorMessage:error,loading: false})
+                    }
+                    this.errorHappend("Product not found");
+                    console.error('There was an error!', error);
+            });
         }
     }
     successfullyAdded = (message) => {
@@ -171,6 +216,15 @@ class ProductsPage extends Component {
             };
         });
         const { data, loading } = this.state;
+        if (this.state.errorMessage) {
+            return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+                <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
+                {this.state.errorMessage.includes("token")&&(<Link to="/login">
+                    <Button>Click here to login again</Button>
+                </Link>)}
+            </Space>;
+        } else
+        {
         return (
             <Layout>
                 <div>
@@ -187,7 +241,7 @@ class ProductsPage extends Component {
                 </Content>
             </Layout>
         );
-    }
+    }}
 }
 
 export default ProductsPage;

@@ -9,19 +9,16 @@ import EditableTableCell from "../components/EditableTableCell";
 import {Link} from "react-router-dom";
 import {Content} from "antd/es/layout/layout";
 import Search from "antd/es/input/Search";
+import Text from "antd/es/typography/Text";
 
 class OrdersPage extends Component {
     constructor(props) {
         super(props);
         this.state = {
             data: [],
-            // pagination: {
-            //     current: 1,
-            //     pageSize: 10,
-            // },
             loading: false,
             editingKey: "",
-            errorMessage:""
+            errorMessage:null
         };
         this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
         this.onSearch = this.onSearch.bind(this);
@@ -33,13 +30,20 @@ class OrdersPage extends Component {
         API.get(`orders/filter-order-status`,{  params: { status: value },headers: { Authorization: this.token}})
             .then((res) => {
                 console.log(res.data._embedded.ordersDtoList);
-           //     this.state.data=res.data._embedded.ordersDtoList;
                 this.setState({loading:false});
-             //   console.log(this.state.data);
-                //this.setState({loading:false,data: res.data._embedded.ordersDtoList});
-            }).catch(e=>{
-                console.log(e);
-                this.setState({loading:true})
+            })
+            .catch(error => {
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error,loading:true})
+                }
+                this.errorHappend("Failed to load data");
+                console.error('There was an error!', error);
         });
     }
     //VRATI SE NA OVO, NESTO OVDE NIJE DORO
@@ -55,10 +59,18 @@ class OrdersPage extends Component {
             API.get(`orders/filter-order-status`,{  params: { status: value },headers: { Authorization: token}})
                 .then(res => {
                     this.setState({loading:false,data:res.data._embedded.ordersDtoList})
-                }).catch(e=>{
-                    console.log(e);
-                this.errorHappend("");
-                this.setState({loading: false});
+                }).catch(error => {
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error,loading:false})
+                }
+                this.errorHappend("Failed to filter data");
+                console.error('There was an error!', error);
             });
         }
     }
@@ -71,7 +83,20 @@ class OrdersPage extends Component {
                 orders[index] = res.data;
                 this.setState({data: orders});
                 this.successfullyAdded("Order status has been changed");
-            });
+            })
+            .catch(error => {
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error,loading:true})
+                }
+                this.errorHappend("Failed to change status");
+                console.error('There was an error!', error);
+        });
     }
 
     cancel = () => {
@@ -83,7 +108,20 @@ class OrdersPage extends Component {
             .then(res => {
                 const orders = res.data._embedded.ordersDtoList;
                 this.setState({loading: false,data:orders });
-            });
+            })
+            .catch(error => {
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"})
+                }
+                else
+                {
+                    this.setState({errorMessage:error})
+                }
+                this.errorHappend("Failed to load data");
+                console.error('There was an error!', error);
+        });
     }
     async remove(id) {
         API.delete(`/orders/${id}`,{ headers: { Authorization: this.token}})
@@ -91,8 +129,18 @@ class OrdersPage extends Component {
                 let updatedOrders = [...this.state.data].filter(i => i.id !== id);
                 this.setState({data: updatedOrders});
                 this.successfullyAdded("Order is deleted");
-            }).catch((error)=>{
-            this.errorHappend("");
+            }).catch(error => {
+            var message=JSON.stringify(error.response.data.error_message);
+            if(message.includes("The Token has expired"))
+            {
+                this.setState({errorMessage:"Your token has expired"})
+            }
+            else
+            {
+                this.setState({errorMessage:error})
+            }
+            this.errorHappend("Failed to delete product");
+            console.error('There was an error!', error);
         });
     }
 
@@ -118,8 +166,16 @@ class OrdersPage extends Component {
                     this.successfullyAdded("Order is updated");
                 })
                 .catch(error => {
-                    this.setState({ errorMessage: error.message });
-                    this.errorHappend("");
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"})
+                    }
+                    else
+                    {
+                        this.setState({errorMessage:error,loading:true})
+                    }
+                    this.errorHappend("Failed to save data");
                     console.error('There was an error!', error);
                 });
         });
@@ -139,9 +195,19 @@ class OrdersPage extends Component {
                         this.state.data.push(res.data);
 
                         this.setState({loading: false,data:this.state.data})
-                    }).catch(e=>{
+                    })
+                .catch(error => {
+                        var message=JSON.stringify(error.response.data.error_message);
+                        if(message.includes("The Token has expired"))
+                        {
+                            this.setState({errorMessage:"Your token has expired"})
+                        }
+                        else
+                        {
+                            this.setState({errorMessage:error,loading:false})
+                        }
                         this.errorHappend("Theres not order found with given ID number");
-                        this.setState({loading: false})
+                        console.error('There was an error!', error);
                 });
             }
             }
@@ -227,6 +293,15 @@ class OrdersPage extends Component {
             };
         });
         const { data, loading } = this.state;
+        if (this.state.errorMessage) {
+            return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+                <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
+                {this.state.errorMessage.includes("token")&&(<Link to="/login">
+                    <Button>Click here to login again</Button>
+                </Link>)}
+            </Space>;
+        } else
+        {
         return (
             <Layout>
                 <div>
@@ -252,7 +327,7 @@ class OrdersPage extends Component {
                 </Content>
             </Layout>
         );
-    }
+    }}
 }
 
 export default OrdersPage;

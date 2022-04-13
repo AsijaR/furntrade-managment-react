@@ -1,10 +1,12 @@
 import React, {Component} from 'react';
 import EditableTableRow, {EditableContext} from "./EditableTableRow";
 import EditableTableCell from "./EditableTableCell";
-import {notification, Popconfirm, Space, Table, Typography} from "antd";
+import {Button, notification, Popconfirm, Space, Table, Typography} from "antd";
 import {orderedProductsDataColumns} from "../tableColumnsData/orderedProductsDataColumns";
 import API from "../server-apis/api";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
+import Text from "antd/es/typography/Text";
+import {Link} from "react-router-dom";
 
 class OrderedProductsTable extends Component {
     constructor(props) {
@@ -13,7 +15,7 @@ class OrderedProductsTable extends Component {
             data:this.props.products,
             loading: false,
             editingKey: "",
-            errorMessage:""
+            errorMessage:null
         };
         this.isEditing= (record) => record.id === this.state.editingKey;
         this.saveData=this.saveData.bind(this);
@@ -41,7 +43,19 @@ class OrderedProductsTable extends Component {
                 let updatedCustomers = [...this.state.data].filter(i => i.id !== id);
                 this.setState({data: updatedCustomers});
                 this.successfullyAdded("Product is deleted");
-            }).catch(()=>this.errorHappend("Failed to deleted"));
+            }).catch((error)=>{
+            var message=JSON.stringify(error.response.data.error_message);
+            if(message.includes("The Token has expired"))
+            {
+                this.setState({errorMessage:"Your token has expired"})
+            }
+            else
+            {
+                this.setState({errorMessage:error})
+            }
+            this.errorHappend("Failed to delete product");
+            console.error('There was an error!', error);
+        });
     }
     successfullyAdded = (message) => {
         notification.info({
@@ -77,9 +91,17 @@ class OrderedProductsTable extends Component {
                     this.setState({ data: newData, editingKey: "" });
                     this.successfullyAdded("Product info is updated")
                 })
-                .catch(error => {
-                    this.setState({ errorMessage: error.message });
-                    this.errorHappend("Failed to save changes.")
+                .catch((error)=>{
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"})
+                    }
+                    else
+                    {
+                        this.setState({errorMessage:error})
+                    }
+                    this.errorHappend("Failed to save changes");
                     console.error('There was an error!', error);
                 });
         });
@@ -108,7 +130,7 @@ class OrderedProductsTable extends Component {
                 </span>
                         ) : (
                             <Space size='middle'>
-                                <Typography.Link disabled={this.state.editingKey !== ''} onClick={() => this.edit(record.id)}>Edit</Typography.Link>
+                                {/*<Typography.Link disabled={this.state.editingKey !== ''} onClick={() => this.edit(record.id)}>Edit</Typography.Link>*/}
                                 <Popconfirm title='Are you sure you want to delete this product from order?' onConfirm={() => this.remove(record.id)}>
                                     <Typography.Link disabled={this.state.editingKey !== ''} type="danger">Delete</Typography.Link>
                                 </Popconfirm>
@@ -141,13 +163,22 @@ class OrderedProductsTable extends Component {
                 }
             };
         });
-        const { loading,data } = this.state;
+        const { loading,data,errorMessage } = this.state;
+        if (errorMessage.includes("token")) {
+            return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+                <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
+                <Link to="/login">
+                    <Button>Click here to login again</Button>
+                </Link>
+            </Space>;
+        } else
+        {
         return (
             <div>
                 <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>
             </div>
         );
-    }
+    }}
 }
 
 export default OrderedProductsTable;
