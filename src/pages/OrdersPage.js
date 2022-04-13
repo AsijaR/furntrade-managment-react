@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {ordersDataColumns} from "../tableColumnsData/ordersDataColumns";
-import EditableTableRow, {EditableContext} from "../components/EditableTableRow";
+import EditableTableRow from "../components/EditableTableRow";
 import '@ant-design/compatible/assets/index.css';
 import {Button, Layout, notification, Popconfirm, Select, Space, Table, Typography} from "antd";
 import API from "../server-apis/api";
@@ -191,9 +191,8 @@ class OrdersPage extends Component {
                 params.append('id', value);
                 API.get(`orders/search/`, { params: { id: value },headers: { Authorization: this.token}})
                     .then(res => {
-                        this.state.data=[];
-                        this.state.data.push(res.data);
-
+                        //this.state.data=[];
+                       // this.state.data.push(res.data);
                         this.setState({loading: false,data:this.state.data})
                     })
                 .catch(error => {

@@ -5,15 +5,14 @@ import CustomersPage from "./CustomersPage";
 import OrdersPage from "./OrdersPage";
 import SettingsPage from "./SettingsPage";
 import Sider from "antd/es/layout/Sider";
-import {Menu, Space} from "antd";
-import {BrowserRouter as Router, Route, Link, Routes , Navigate} from "react-router-dom";
+import {Menu, Space, Typography} from "antd";
+import {BrowserRouter as Router, Route, Link, Routes} from "react-router-dom";
 import {FaBuilding, FaCouch, FaUsers, IoDocumentText, IoLogOut, IoMdSettings} from "react-icons/all";
 import AddProductPage from "./AddProductPage";
 import AddCustomerPage from "./AddCustomerPage";
 import EmployeesPage from "./EmployeesPage";
 import authService from "../services/auth.service";
 import LoginPage from "./LoginPage";
-import { useHistory } from "react-router-dom";
 import OrderDetails from "./OrderDetails";
 import AddEmployeePage from "./AddEmployeePage";
 import Text from "antd/es/typography/Text";
@@ -82,8 +81,8 @@ class MainLayoutPage extends Component {
                                     <span>My profile</span>
                                 </Menu.Item>
                                 <Menu.Item key="6" icon={<IoLogOut/>} >
-                                    <a onClick={this.logoutUser}/>
-                                    <span>Log out</span>
+                                    <Typography.Link onClick={this.logoutUser}>Log out</Typography.Link>
+                                    {/*<span></span>*/}
                                 </Menu.Item>
                             </Menu>
                         </Sider>

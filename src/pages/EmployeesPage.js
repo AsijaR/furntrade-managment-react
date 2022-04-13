@@ -40,8 +40,7 @@ class EmployeesPage extends Component {
             .then(res => {
                 const employees = res.data._embedded.employeeInfoDtoList;
                 this.setState({loading: false,data:employees, token:token });
-            }).
-        catch((error)=>{
+            }).catch((error)=>{
             var message=JSON.stringify(error.response.data.error_message);
             if(message.includes("The Token has expired"))
             {

@@ -76,7 +76,7 @@ class AddEmployeePage extends Component {
                                 <Input />
                             </Form.Item>
                             <Form.Item label="Create password" name="password" rules={[ {required: true,message:"Please create password"},{
-                                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@.?#\$%\^&\*])(?=.{8,})/,
+                                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@.?#*$%&])(?=.{8,})/,
                                 message: 'Password needs to include at least one lowercase, uppercase, numeric and special character and to be at least 8 characters long',} ]}>
                                 <Input.Password/>
                             </Form.Item>
