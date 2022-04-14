@@ -50,7 +50,6 @@
     ]
   },
   "devDependencies": {
-    "eslint-config-react-app": "^7.0.1",
     "redux-devtools-extension": "^2.13.9"
   }
 }
