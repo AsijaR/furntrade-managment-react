@@ -2,6 +2,10 @@
   "name": "furntrade-managment-react",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "14.2.0",
+    "npm": "6.14.5"
+  },
   "dependencies": {
     "@ant-design/compatible": "^1.0.8",
     "@ant-design/icons": "^4.7.0",
