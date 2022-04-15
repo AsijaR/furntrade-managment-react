@@ -46,7 +46,7 @@ class LoginPage extends Component{
                                 error.response.data.message) ||
                             error.message ||
                             error.toString();
-                        this.errorHappend(error);
+                        this.errorHappend("Entered data is not correct.");
                         this.setState({
                             loading: false,
                             message: resMessage

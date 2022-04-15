@@ -104,9 +104,9 @@ class AddProductPage extends Component {
                                 <Form.Item label="Price" name="price"
                                            rules={[{required: true, message: 'Please enter price',}, {
                                                pattern: /^[0-9 ]+$/,
-                                               message: 'Name can only include numbers',
+                                               message: 'Price can only include numbers',
                                            }]}>
-                                    <InputNumber min={0}/>
+                                    <InputNumber min={1}/>
                                 </Form.Item>
 
                                 <Form.Item>

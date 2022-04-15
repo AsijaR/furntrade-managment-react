@@ -17,39 +17,47 @@ class AddNewProductsToOrder extends Component {
     onFinish = values => {
         if(!this.props.isNewOrder)
         {
-            const params = new URLSearchParams();
-            params.append('quantity', values.quantity);
-            API.patch(`orders/${this.props.orderId}/add-product/${values.product}`,params,{ headers: { Authorization: this.props.token}})
-                .then((res) => {
-                    let orderedProducts=res.data.orderedProducts.map((p)=>{
-                        return {
-                            id: p.product.id,
-                            color: p.product.color,
-                            model: p.product.model,
-                            name: p.product.name,
-                            price: p.product.price,
-                            quantity: p.quantity,
-                        }
-                    })
-                    var addedProd=orderedProducts.slice(-1).pop();
-                    this.props.handler(res.data,addedProd);
-                    this.successfullyAdded("Product is successfully added to the order.");
-                })
-                .catch(error => {
-                    var message=JSON.stringify(error.response.data.error_message);
-                    if(message.includes("The Token has expired"))
-                    {
-                        this.setState({errorMessage:"Your token has expired"})
-                    }
-                    else
-                    {
-                        this.setState({errorMessage:error})
-                    }
-                    if(error.response.status===403)
-                        this.errorHappend("Product already exists in the order.");
-                    else this.errorHappend("Failed to save");
-                    console.error('There was an error!', error);
+            if(this.state.data.some(p=>p.id===values.product)){
+                notification.info({
+                    message: `Notification`,
+                    description:
+                        `Product already exists in the list.`,
+                    placement:"bottomRight",
+                    icon: <InfoCircleFilled style={{ color: '#f53333' }} />
                 });
+            }
+        else {
+                const params = new URLSearchParams();
+                params.append('quantity', values.quantity);
+                API.patch(`orders/${this.props.orderId}/add-product/${values.product}`, params, {headers: {Authorization: this.props.token}})
+                    .then((res) => {
+                        let orderedProducts = res.data.orderedProducts.map((p) => {
+                            return {
+                                id: p.product.id,
+                                color: p.product.color,
+                                model: p.product.model,
+                                name: p.product.name,
+                                price: p.product.price,
+                                quantity: p.quantity,
+                            }
+                        })
+                        var addedProd = orderedProducts.slice(-1).pop();
+                        this.props.handler(res.data, addedProd);
+                        this.successfullyAdded("Product is successfully added to the order.");
+                    })
+                    .catch(error => {
+                        var message = JSON.stringify(error.response.data.error_message);
+                        if (message.includes("The Token has expired")) {
+                            this.setState({errorMessage: "Your token has expired"})
+                        } else {
+                            this.setState({errorMessage: error})
+                        }
+                        if (error.response.status === 403)
+                            this.errorHappend("Product already exists in the order.");
+                        else this.errorHappend("Failed to save");
+                        console.error('There was an error!', error);
+                    });
+            }
         }
         else{
             const newProd=this.state.data.find(({id})=>id===values.product);
@@ -129,7 +137,7 @@ class AddNewProductsToOrder extends Component {
                     <Select mode="single" options={options} />
                 </Form.Item>
                 <Form.Item label="Choose a quantity" name="quantity" rules={[{ required: true, message: 'Missing quantity' }]}>
-                    <InputNumber placeholder="Quantity" />
+                    <InputNumber placeholder="Quantity" min={1}/>
                 </Form.Item>
                 <Form.Item>
                     <Button type="primary" htmlType="submit">

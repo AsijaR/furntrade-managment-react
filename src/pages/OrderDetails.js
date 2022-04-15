@@ -113,15 +113,6 @@ class OrderDetails extends Component {
                                 status: orderDetails.status
                             }
                         });
-                    },
-                    // Note: it's important to handle errors here
-                    // instead of a catch() block so that we don't swallow
-                    // exceptions from actual bugs in components.
-                    (error) => {
-                        this.setState({
-                            isLoaded: true,
-                            error
-                        });
                     }
                 ).catch(error => {
                     var message=JSON.stringify(error.response.data.error_message);
@@ -196,24 +187,30 @@ class OrderDetails extends Component {
             }
             return productInfo;
         });
-        API.post(`/orders/add`,{order,products},{ headers: { Authorization: this.token}})
-            .then((res) => {
-                this.successfullyAdded("Order is successfully created!");
-                console.log(res);
-            })
-            .catch(error => {
-                var message=JSON.stringify(error.response.data.error_message);
-                if(message.includes("The Token has expired"))
-                {
-                    this.setState({errorMessage:"Your token has expired"})
-                }
-                else
-                {
-                    this.setState({errorMessage:error})
-                }
-                this.errorHappend("Failed to save");
-                console.error('There was an error!', error);
-            });
+        if (products.length===0)
+        {
+            this.errorHappend("Please add products to create order");
+        }
+        else{
+            API.post(`/orders/add`,{order,products},{ headers: { Authorization: this.token}})
+                .then((res) => {
+                    this.successfullyAdded("Order is successfully created!");
+                    console.log(res);
+                })
+                .catch(error => {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"})
+                    }
+                    else
+                    {
+                        this.setState({errorMessage:error})
+                    }
+                    this.errorHappend("Failed to save");
+                    console.error('There was an error!', error);
+                });
+        }
     }
     onFinish = (values) => {
         var customerName=this.state.selectedCustomer.split(",")[0];

@@ -19,7 +19,7 @@ class ProductsPage extends Component {
             //     current: 1,
             //     pageSize: 10,
             // },
-            loading: false,
+            loading: true,
             editingKey: "",
             errorMessage:null
         };
@@ -40,11 +40,17 @@ class ProductsPage extends Component {
     };
 
     componentDidMount() {
-        this.setState({ loading: true });
         API.get(`products`,{ headers: { Authorization: this.token}})
             .then(res => {
+                if(!Object.keys(res.data).length){
+                    console.log("no data found");
+                    this.setState({loading: false,data:null });
+                }
+                else
+                {
                 const products = res.data._embedded.productList;
                 this.setState({loading: false,data:products });
+                }
             })
             .catch(error => {
                 var message=JSON.stringify(error.response.data.error_message);
@@ -123,10 +129,15 @@ class ProductsPage extends Component {
         if(value===""||this.hasWhiteSpace(value))
             this.componentDidMount();
         else{
+            console.log(value)
             API.get(`products/search/`, { params: { productName: value },headers: { Authorization: this.token}})
                 .then(res => {
-                    const products = res.data.productList;
-                    this.setState({loading: false,data:products });
+                    if(!Object.keys(res.data).length){
+                        this.setState({loading: false,data:null });
+                    }
+                    else {
+                    const products = res.data._embedded.productList;
+                   this.setState({loading: false,data:products });}
                 })
                 .catch(error => {
                     var message=JSON.stringify(error.response.data.error_message);

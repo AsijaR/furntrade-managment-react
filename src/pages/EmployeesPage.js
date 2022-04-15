@@ -38,8 +38,14 @@ class EmployeesPage extends Component {
         const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
         API.get(`users/all`,{ headers: { Authorization: token}})
             .then(res => {
-                const employees = res.data._embedded.employeeInfoDtoList;
-                this.setState({loading: false,data:employees, token:token });
+                if(!Object.keys(res.data).length){
+                    console.log("no data found");
+                    this.setState({loading: false,data:null });
+                }
+                else {
+                    const employees = res.data._embedded.employeeInfoDtoList;
+                    this.setState({loading: false, data: employees, token: token});
+                }
             }).
         catch((error)=>{
             var message=JSON.stringify(error.response.data.error_message);
@@ -49,7 +55,7 @@ class EmployeesPage extends Component {
             }
             else
             {
-                this.setState({errorMessage:error})
+                this.setState({errorMessage:error,loading: false,data:null})
             }
             this.errorHappend("Failed to delete");
             console.error('There was an error!', error);

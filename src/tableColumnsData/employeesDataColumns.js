@@ -10,7 +10,7 @@ export const employeesDataColumns = [
         title: "First name",
         dataIndex: "firstName",
         // key: "firstName",
-        editable: true
+        editable: true,
     },
     {
         title: "Last Name",

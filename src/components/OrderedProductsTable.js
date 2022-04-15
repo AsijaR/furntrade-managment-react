@@ -36,26 +36,29 @@ class OrderedProductsTable extends Component {
     };
 
     async remove(id) {
-        const params = new URLSearchParams();
-        params.append('quantity', 0);
-        API.patch(`orders/${this.props.orderId}/remove-product/${id}`,params,{ headers: { Authorization: this.props.token}})
-            .then(() => {
-                let updatedCustomers = [...this.state.data].filter(i => i.id !== id);
-                this.setState({data: updatedCustomers});
-                this.successfullyAdded("Product is deleted");
-            }).catch((error)=>{
-            var message=JSON.stringify(error.response.data.error_message);
-            if(message.includes("The Token has expired"))
-            {
-                this.setState({errorMessage:"Your token has expired"})
-            }
-            else
-            {
-                this.setState({errorMessage:error})
-            }
-            this.errorHappend("Failed to delete product");
-            console.error('There was an error!', error);
-        });
+        if(this.state.data.length===1)
+        {
+            this.errorHappend("Order needs to have at least one product");
+        }
+        else {
+            const params = new URLSearchParams();
+            params.append('quantity', 0);
+            API.patch(`orders/${this.props.orderId}/remove-product/${id}`, params, {headers: {Authorization: this.props.token}})
+                .then(() => {
+                    let updatedCustomers = [...this.state.data].filter(i => i.id !== id);
+                    this.setState({data: updatedCustomers});
+                    this.successfullyAdded("Product is deleted");
+                }).catch((error) => {
+                var message = JSON.stringify(error.response.data.error_message);
+                if (message.includes("The Token has expired")) {
+                    this.setState({errorMessage: "Your token has expired"})
+                } else {
+                    this.setState({errorMessage: error})
+                }
+                this.errorHappend("Failed to delete product");
+                console.error('There was an error!', error);
+            });
+        }
     }
     successfullyAdded = (message) => {
         notification.info({
@@ -69,7 +72,7 @@ class OrderedProductsTable extends Component {
         notification.info({
             message: `Notification`,
             description:
-                `There was an error! ${error}`,
+                `${error}`,
             placement:"bottomRight",
             icon: <InfoCircleFilled style={{ color: '#f53333' }} />
         });
@@ -164,7 +167,7 @@ class OrderedProductsTable extends Component {
             };
         });
         const { loading,data,errorMessage } = this.state;
-        if (errorMessage.includes("token")) {
+        if (errorMessage!==null&&errorMessage.includes("token")) {
             return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
                 <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
                 <Link to="/login">

@@ -42,8 +42,13 @@ class CustomersPage extends Component {
     componentDidMount() {
         API.get(`customers`,{ headers: { Authorization: this.token}})
             .then(res => {
+                if(!Object.keys(res.data).length){
+                    console.log("no data found");
+                    this.setState({loading: false,data:null });
+                }
+                else {
                 const customers = res.data._embedded.customerList;
-                this.setState({loading: false,data:customers });
+                this.setState({loading: false,data:customers });}
             })
             .catch((error)=>{
                 var message=JSON.stringify(error.response.data.error_message);
@@ -53,7 +58,7 @@ class CustomersPage extends Component {
                 }
                 else
                 {
-                    this.setState({errorMessage:error})
+                    this.setState({errorMessage:error,loading: false,data:null })
                 }
                 this.errorHappend(error);
                 console.error('There was an error!', error);
@@ -192,7 +197,8 @@ class CustomersPage extends Component {
                     <Button>Click here to login again</Button>
                 </Link>)}
             </Space>;
-        } else
+        }
+        else
         {
         return (
             <Layout>

@@ -57,7 +57,8 @@ class EditableTableCell extends Component {
             default:
                 return (
                     <FormItem style={{ margin: 0 }}>
-                        {getFieldDecorator(dataIndex, {
+
+                        {getFieldDecorator(dataIndex,{
                             rules: [
                                 {
                                     required: true,
@@ -65,7 +66,8 @@ class EditableTableCell extends Component {
                                 }
                             ],
                             initialValue: record[dataIndex]
-                        })(<Input />)}
+                        })
+                        (<Input />)}
                     </FormItem>
                 );
         }

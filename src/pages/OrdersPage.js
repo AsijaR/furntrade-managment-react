@@ -16,7 +16,7 @@ class OrdersPage extends Component {
         super(props);
         this.state = {
             data: [],
-            loading: false,
+            loading: true,
             editingKey: "",
             errorMessage:null
         };
@@ -58,7 +58,13 @@ class OrdersPage extends Component {
         else{
             API.get(`orders/filter-order-status`,{  params: { status: value },headers: { Authorization: token}})
                 .then(res => {
+                    if(!Object.keys(res.data).length){
+                        console.log("no data found");
+                        this.setState({loading: false,data:null });
+                    }
+                    else {
                     this.setState({loading:false,data:res.data._embedded.ordersDtoList})
+                    }
                 }).catch(error => {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
@@ -103,21 +109,29 @@ class OrdersPage extends Component {
         this.setState({ editingKey: "" });
     };
     componentDidMount() {
-        this.setState({ loading: true });
         API.get(`orders`,{ headers: { Authorization: this.token}})
             .then(res => {
-                const orders = res.data._embedded.ordersDtoList;
-                this.setState({loading: false,data:orders });
+                if(!Object.keys(res.data).length){
+                    console.log("no data found");
+                    this.setState({loading: false,data:null });
+                }
+                else
+                {
+                    console.log("u componentDidMount sam");
+                    const orders = res.data._embedded.ordersDtoList;
+                    console.log(orders);
+                    this.setState({loading: false,data:orders });
+                }
             })
             .catch(error => {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
-                {
-                    this.setState({errorMessage:"Your token has expired"})
-                }
+                    {
+                        this.setState({errorMessage:"Your token has expired"})
+                    }
                 else
                 {
-                    this.setState({errorMessage:error})
+                    this.setState({errorMessage:error,loading: false})
                 }
                 this.errorHappend("Failed to load data");
                 console.error('There was an error!', error);
@@ -182,34 +196,44 @@ class OrdersPage extends Component {
     }
     onSearch (value){
         //check if user has entered number
-        if(!isNaN(+value)){
-            this.setState({ loading: true });
             if(value===""||this.hasWhiteSpace(value))
                 this.componentDidMount();
             else{
-                const params = new URLSearchParams();
-                params.append('id', value);
-                API.get(`orders/search/`, { params: { id: value },headers: { Authorization: this.token}})
-                    .then(res => {
-                        this.state.data=[];
-                        this.state.data.push(res.data);
-
-                        this.setState({loading: false,data:this.state.data})
-                    })
-                .catch(error => {
-                        var message=JSON.stringify(error.response.data.error_message);
-                        if(message.includes("The Token has expired"))
-                        {
-                            this.setState({errorMessage:"Your token has expired"})
-                        }
-                        else
-                        {
-                            this.setState({errorMessage:error,loading:false})
-                        }
-                        this.errorHappend("Theres not order found with given ID number");
-                        console.error('There was an error!', error);
-                });
+                var regex=/^[0-9]+$/;
+                if(value.match(regex))
+                {
+                    this.setState({ loading: true });
+                    const params = new URLSearchParams();
+                    params.append('id', value);
+                    API.get(`orders/search/`, { params: { id: value },headers: { Authorization: this.token}})
+                        .then(res => {
+                            if(!Object.keys(res.data).length)
+                            {
+                                this.setState({loading: false,data:null });
+                            }
+                            else
+                            {
+                                this.setState({loading: false,data:res.data._embedded.ordersDtoList});
+                            }
+                        })
+                    .catch(error => {
+                            var message=JSON.stringify(error.response.data.error_message);
+                            if(message.includes("The Token has expired"))
+                            {
+                                this.setState({errorMessage:"Your token has expired"})
+                            }
+                            else
+                            {
+                                this.setState({errorMessage:error,loading:false,data:null})
+                            }
+                            this.errorHappend("Theres not order found with given ID number");
+                            console.error('There was an error!', error);
+                    });
             }
+                else
+                {
+                    this.errorHappend("Searching is only done by ID");
+                }
             }
         }
     successfullyAdded = (message) => {
@@ -224,7 +248,7 @@ class OrdersPage extends Component {
         notification.info({
             message: `Notification`,
             description:
-                `There was an error! ${error}`,
+                `${error}`,
             placement:"bottomRight",
             icon: <InfoCircleFilled style={{ color: '#f53333' }} />
         });
