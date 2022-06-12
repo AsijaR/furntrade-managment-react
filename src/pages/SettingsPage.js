@@ -83,7 +83,9 @@ class SettingsPage extends Component {
                 this.successfullyAdded("Password is successflly changed!");
             })
             .catch((error)=>{
+                console.log("greska"+error.response);
                 var message=JSON.stringify(error.response.data.error_message);
+                if(message===null){
                 if(message.includes("The Token has expired"))
                 {
                     this.setState({errorMessage:"Your token has expired"})
@@ -91,7 +93,7 @@ class SettingsPage extends Component {
                 else
                 {
                     this.setState({errorMessage:error})
-                }
+                }}
                 this.errorHappend("Entered current password is wrong.");
                 console.error('There was an error!', error);
             });

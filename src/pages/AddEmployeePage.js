@@ -22,6 +22,7 @@ class AddEmployeePage extends Component {
             .catch(error => {
                 // this.setState({ errorMessage: error.message });
                 var message=JSON.stringify(error.response.data.error_message);
+                if(message===null){
                 if(message.includes("The Token has expired"))
                 {
                     this.setState({errorMessage:"Your token has expired"})
@@ -30,7 +31,8 @@ class AddEmployeePage extends Component {
                 {
                     this.setState({errorMessage:error})
                 }
-                this.errorHappend(error);
+            }
+                this.errorHappend(error.response.data);
                 console.error('There was an error!', error);
             });
     };
@@ -50,7 +52,7 @@ class AddEmployeePage extends Component {
         notification.info({
             message: `Notification`,
             description:
-                `There was an error! ${error}`,
+                `${error}`,
             placement:"bottomRight",
             icon: <InfoCircleFilled style={{ color: '#f53333' }} />
         });

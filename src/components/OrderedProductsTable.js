@@ -40,6 +40,11 @@ class OrderedProductsTable extends Component {
         {
             this.errorHappend("Order needs to have at least one product");
         }
+        else if (this.state.data.id==null){
+            let updatedCustomers = [...this.state.data].filter(i => i.id !== id);
+            this.setState({data: updatedCustomers});
+            this.successfullyAdded("Product is deleted");
+        }
         else {
             const params = new URLSearchParams();
             params.append('quantity', 0);
