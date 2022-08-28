@@ -7,12 +7,14 @@ import API from "../server-apis/api";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
 import {Link} from "react-router-dom";
+import authService from '../services/auth.service';
 
 class OrderedProductsTable extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            data:this.props.products,
+            data:[],
+            isRemoved:false,
             loading: false,
             editingKey: "",
             errorMessage:null
@@ -21,9 +23,16 @@ class OrderedProductsTable extends Component {
         this.saveData=this.saveData.bind(this);
     }
     UNSAFE_componentWillReceiveProps(nextProps) {
+       
         if (nextProps.products !== this.props.products) {
             this.setState({ data: nextProps.products });
         }
+    }
+    componentDidMount() {
+        this.setState({data:this.props.products});
+    }
+    isRemovedFunc(){
+        return true;
     }
     isEditing =(record) => {
         return record.id === this.state.editingKey;
@@ -36,34 +45,74 @@ class OrderedProductsTable extends Component {
     };
 
     async remove(id) {
+        var total=0;
+        var isOrderNew=window.location.href.toString().includes("create-new-order");
         if(this.state.data.length===1)
         {
             this.errorHappend("Order needs to have at least one product");
+            return;
         }
-        else if (this.state.data.id==null){
-            let updatedCustomers = [...this.state.data].filter(i => i.id !== id);
-            this.setState({data: updatedCustomers});
+        if (isOrderNew){
+            let updatedProducts = [...this.state.data].filter(i => i.id !== id);
+            updatedProducts.forEach(x=>{
+                total+=x.price*x.quantity;
+            });
+          
+            this.setState({data: updatedProducts,isRemoved:true});
+            this.props.removehandler(updatedProducts);
+            this.props.updateTotalPrice(total);
             this.successfullyAdded("Product is deleted");
         }
         else {
             const params = new URLSearchParams();
             params.append('quantity', 0);
-            API.patch(`orders/${this.props.orderId}/remove-product/${id}`, params, {headers: {Authorization: this.props.token}})
+             API.patch(`orders/${this.props.orderId}/remove-product/${id}`, params, {headers: {Authorization: this.props.token}})
                 .then(() => {
                     let updatedCustomers = [...this.state.data].filter(i => i.id !== id);
-                    this.setState({data: updatedCustomers});
+                    this.setState({data: updatedCustomers,isRemoved:true});
+                    updatedCustomers.forEach(x=>{  total+=x.price*x.quantity;});
+                    this.props.updateTotalPrice(total);
                     this.successfullyAdded("Product is deleted");
+
                 }).catch((error) => {
                 var message = JSON.stringify(error.response.data.error_message);
                 if (message.includes("The Token has expired")) {
-                    this.setState({errorMessage: "Your token has expired"})
+                    this.setState({errorMessage: "Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 } else {
                     this.setState({errorMessage: error})
                 }
                 this.errorHappend("Failed to delete product");
                 console.error('There was an error!', error);
             });
+            //this.updateOrderTotalPrice(total);
         }
+    }
+    async updateOrderTotalPrice(total){
+         API.put(`/orders/update/${this.props.orderId}`,
+        {
+            totalOrderPrice:total
+        },
+        { headers: { Authorization: this.props.token}})
+        .then((res) => {
+            this.successfullyAdded("Order is updated");
+        })
+        .catch(error => {
+            var message=JSON.stringify(error.response.data.error_message);
+            if(message.includes("The Token has expired"))
+            {
+                this.setState({errorMessage:"Your token has expired"});
+                this.errorHappend("Your token has expired.");
+                authService.logout();
+            }
+            else
+            {
+                this.setState({errorMessage:error})
+            }
+            this.errorHappend("Failed to save");
+            console.error('There was an error!', error);
+        });
     }
     successfullyAdded = (message) => {
         notification.info({
@@ -123,6 +172,7 @@ class OrderedProductsTable extends Component {
                 cell: EditableTableCell
             }
         };
+
         const columns = orderedProductsDataColumns.map(col => {
             if (col.dataIndex === 'actions') {
                 return {

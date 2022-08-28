@@ -4,6 +4,7 @@ import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import API from "../server-apis/api";
 import Text from "antd/es/typography/Text";
 import {Link} from "react-router-dom";
+import authService from '../services/auth.service';
 
 class AddNewProductsToOrder extends Component {
     constructor(props) {
@@ -14,10 +15,11 @@ class AddNewProductsToOrder extends Component {
         };
         this.onFinish=this.onFinish.bind(this);
     }
+    
     onFinish = values => {
         if(!this.props.isNewOrder)
         {
-            if(this.state.data.some(p=>p.id===values.product)){
+            if(this.props.products.some(p=>p.id===values.product)){
                 notification.info({
                     message: `Notification`,
                     description:
@@ -48,8 +50,12 @@ class AddNewProductsToOrder extends Component {
                     .catch(error => {
                         var message = JSON.stringify(error.response.data.error_message);
                         if (message.includes("The Token has expired")) {
-                            this.setState({errorMessage: "Your token has expired"})
-                        } else {
+
+                            this.setState({errorMessage: "Your token has expired"});
+                            this.errorHappend("Your token has expired.");
+                            authService.logout();
+                        } 
+                        else {
                             this.setState({errorMessage: error})
                         }
                         if (error.response.status === 403)
@@ -77,14 +83,16 @@ class AddNewProductsToOrder extends Component {
             .then(
                 (res) => {
                     const products = res.data._embedded.productList;
-                    this.setState({data:products });
+                    this.setState({data:products});
                 }
             )
             .catch(error => {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {

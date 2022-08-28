@@ -44,8 +44,6 @@ class MainLayoutPage extends Component {
     };
     logoutUser = () => {
         authService.logout();
-        console.log("izbrisala sam token");
-        window.location.reload(false);
     };
     render() {
         if(this.isUserLoggedOrTokenExpired())

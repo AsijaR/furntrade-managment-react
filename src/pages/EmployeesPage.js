@@ -8,7 +8,8 @@ import API from "../server-apis/api";
 import {employeesDataColumns} from "../tableColumnsData/employeesDataColumns";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
-
+import { Excel } from 'antd-table-saveas-excel';
+import authService from '../services/auth.service';
 
 class EmployeesPage extends Component {
     constructor(props) {
@@ -21,6 +22,14 @@ class EmployeesPage extends Component {
             errorMessage:null
         }
         this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
+        this.exportToExcel = this.exportToExcel.bind(this);
+
+    }
+
+    exportToExcel()
+    {
+       const excel = new Excel();
+       excel.addSheet("Sheet 1").addColumns(employeesDataColumns).addDataSource(this.state.data).saveAs('Employess.xlsx');
     }
 
     isEditing = (record) => {
@@ -51,7 +60,9 @@ class EmployeesPage extends Component {
             var message=JSON.stringify(error.response.data.error_message);
             if(message.includes("The Token has expired"))
             {
-                this.setState({errorMessage:"Your token has expired"})
+                this.setState({errorMessage:"Your token has expired"});
+                this.errorHappend("Your token has expired.");
+                authService.logout();
             }
             else
             {
@@ -72,7 +83,9 @@ class EmployeesPage extends Component {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {
@@ -209,6 +222,7 @@ class EmployeesPage extends Component {
                     </Link>
                 </div>
                 <Content>
+                <Button style={{ marginBottom: 20 }} onClick={this.exportToExcel}>Export to Excel</Button>
                     <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="username" rowClassName="editable-row"/>
                 </Content>
             </Layout>

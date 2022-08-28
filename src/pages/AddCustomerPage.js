@@ -5,6 +5,7 @@ import { Button,Form,Row,Col, Card, Input, InputNumber, notification, Space } fr
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
 import {Link} from "react-router-dom";
+import authService from '../services/auth.service';
 
 class AddCustomerPage extends Component {
     constructor(props) {
@@ -24,7 +25,9 @@ class AddCustomerPage extends Component {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {

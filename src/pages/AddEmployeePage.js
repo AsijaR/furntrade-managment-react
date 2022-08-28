@@ -5,6 +5,7 @@ import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import API from "../server-apis/api";
 import {Link} from "react-router-dom";
 import Text from "antd/es/typography/Text";
+import authService from '../services/auth.service';
 
 class AddEmployeePage extends Component {
     constructor(props) {
@@ -25,7 +26,9 @@ class AddEmployeePage extends Component {
                 if(message===null){
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {

@@ -8,7 +8,6 @@ function orderDetails(orderId){
         .then((response )=>
         {
             const orderDetails = response.data;
-            console.log(orderDetails)
         })
         .catch(error => {
          //   this.setState({ errorMessage: error.message });

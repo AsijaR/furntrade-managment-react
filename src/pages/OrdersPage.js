@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import {ordersDataColumns} from "../tableColumnsData/ordersDataColumns";
 import EditableTableRow, {EditableContext} from "../components/EditableTableRow";
 import '@ant-design/compatible/assets/index.css';
-import {Button, Layout, notification, Popconfirm, Select, Space, Table, Typography} from "antd";
+import {Button, Layout, notification, Popconfirm, Select, Space, Table, Typography,AutoComplete,Input,Icon} from "antd";
 import API from "../server-apis/api";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import EditableTableCell from "../components/EditableTableCell";
@@ -10,6 +10,12 @@ import {Link} from "react-router-dom";
 import {Content} from "antd/es/layout/layout";
 import Search from "antd/es/input/Search";
 import Text from "antd/es/typography/Text";
+import { downloadExcel } from "react-export-table-to-excel";
+import moment from 'moment';
+import authService from '../services/auth.service';
+
+//const header = ["Id", "Shippment Date", "Status","Note 1","Note 2","Customer","Contact Person"];
+const header = ["Id", "Customer", "Shippment Date","Status","Note 1","Note 2","Contact Person"];
 
 class OrdersPage extends Component {
     constructor(props) {
@@ -18,25 +24,53 @@ class OrdersPage extends Component {
             data: [],
             loading: true,
             editingKey: "",
-            errorMessage:null
+            errorMessage:null,
+            options:[],
+            filteredData:[]
         };
         this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
         this.onSearch = this.onSearch.bind(this);
-    }
+        this.exportToExcel = this.exportToExcel.bind(this);
+        this.onChange = this.onChange.bind(this);
 
+    }
+    exportToExcel()
+    {
+      let order = this.state.data.map((order) => {
+            return {
+                id:order.id,
+                customer:order.customerName,
+                shippmentDate: moment(order.shippmentDate).format('DD.MM.YYYY'),
+                status:order.status,
+                note1:order.note1,
+                note2:order.note2,
+                contactPersonName:order.contactPersonName
+            };
+          });
+          
+        downloadExcel({
+            fileName: "Orders",
+            sheet: "Sheet 1",
+            tablePayload: {
+              header,
+              body:order,
+            },
+          });
+    }
     handleChange(value) {
         const params = new URLSearchParams();
         params.append('status', value);
         API.get(`orders/filter-order-status`,{  params: { status: value },headers: { Authorization: this.token}})
             .then((res) => {
-                console.log(res.data._embedded.ordersDtoList);
                 this.setState({loading:false});
             })
             .catch(error => {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {
@@ -46,30 +80,32 @@ class OrdersPage extends Component {
                 console.error('There was an error!', error);
         });
     }
-    //VRATI SE NA OVO, NESTO OVDE NIJE DORO
+
     filterOrdersByStatus=(value)=>{
         this.setState({loading:true})
         const params = new URLSearchParams();
         params.append('status', value);
         const token="Bearer "+ JSON.parse(localStorage.getItem("token"));
         if(value==="ALL"){
-            this.componentDidMount();
+            var allOrders=this.state.data;
+            this.setState({loading:false,filteredData:allOrders})
         }
         else{
             API.get(`orders/filter-order-status`,{  params: { status: value },headers: { Authorization: token}})
                 .then(res => {
                     if(!Object.keys(res.data).length){
-                        console.log("no data found");
-                        this.setState({loading: false,data:null });
+                        this.setState({loading: false,filteredData:null });
                     }
                     else {
-                    this.setState({loading:false,data:res.data._embedded.ordersDtoList})
+                    this.setState({loading:false,filteredData:res.data._embedded.ordersDtoList})
                     }
                 }).catch(error => {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {
@@ -94,7 +130,9 @@ class OrdersPage extends Component {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {
@@ -117,17 +155,21 @@ class OrdersPage extends Component {
                 }
                 else
                 {
-                    console.log("u componentDidMount sam");
                     const orders = res.data._embedded.ordersDtoList;
-                    console.log(orders);
-                    this.setState({loading: false,data:orders });
+                    const opt=orders.map((item,index) => {
+                        return {
+                            label:item.id.toString(),value:item.id.toString()
+                        }});
+                    this.setState({loading: false,data:orders,options:opt,filteredData:orders });
                 }
             })
             .catch(error => {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                     {
-                        this.setState({errorMessage:"Your token has expired"})
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
                     }
                 else
                 {
@@ -141,13 +183,15 @@ class OrdersPage extends Component {
         API.delete(`/orders/${id}`,{ headers: { Authorization: this.token}})
             .then(() => {
                 let updatedOrders = [...this.state.data].filter(i => i.id !== id);
-                this.setState({data: updatedOrders});
+                this.setState({data: updatedOrders,filteredData:updatedOrders});
                 this.successfullyAdded("Order is deleted");
             }).catch(error => {
             var message=JSON.stringify(error.response.data.error_message);
             if(message.includes("The Token has expired"))
             {
-                this.setState({errorMessage:"Your token has expired"})
+                this.setState({errorMessage:"Your token has expired"});
+                this.errorHappend("Your token has expired.");
+                authService.logout();
             }
             else
             {
@@ -157,7 +201,18 @@ class OrdersPage extends Component {
             console.error('There was an error!', error);
         });
     }
-
+    onChange = (input) => {
+        let value = input.target.value.toLowerCase();
+        let result = [];
+        if(value===""||this.hasWhiteSpace(value))
+        {
+            result=this.state.data;
+            this.setState({filteredData:result});
+            return;
+        }
+       result = this.state.data.filter((order) => {return order.id.toString().search(value) !== -1});
+       this.setState({filteredData:result});
+    }
     hasWhiteSpace(s) {
         return /\s/g.test(s);
     }
@@ -176,14 +231,16 @@ class OrdersPage extends Component {
             API.put(`/orders/update/${id}`, row,{headers: { Authorization: this.token}})
                 .then((response )=>
                 {
-                    this.setState({ data: newData, editingKey: "" });
+                    this.setState({ data: newData, editingKey: "",filteredData:newData });
                     this.successfullyAdded("Order is updated");
                 })
                 .catch(error => {
                     var message=JSON.stringify(error.response.data.error_message);
                     if(message.includes("The Token has expired"))
                     {
-                        this.setState({errorMessage:"Your token has expired"})
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
                     }
                     else
                     {
@@ -205,30 +262,6 @@ class OrdersPage extends Component {
                     this.setState({ loading: true });
                     const params = new URLSearchParams();
                     params.append('id', value);
-                    API.get(`orders/search/`, { params: { id: value },headers: { Authorization: this.token}})
-                        .then(res => {
-                            if(!Object.keys(res.data).length)
-                            {
-                                this.setState({loading: false,data:null });
-                            }
-                            else
-                            {
-                                this.setState({loading: false,data:res.data._embedded.ordersDtoList});
-                            }
-                        })
-                    .catch(error => {
-                            var message=JSON.stringify(error.response.data.error_message);
-                            if(message.includes("The Token has expired"))
-                            {
-                                this.setState({errorMessage:"Your token has expired"})
-                            }
-                            else
-                            {
-                                this.setState({errorMessage:error,loading:false,data:null})
-                            }
-                            this.errorHappend("Theres not order found with given ID number");
-                            console.error('There was an error!', error);
-                    });
             }
                 else
                 {
@@ -260,6 +293,7 @@ class OrdersPage extends Component {
                 cell: EditableTableCell
             }
         };
+  
         const columns = ordersDataColumns.map(col => {
             if (col.dataIndex === 'status') {
                 return {
@@ -316,7 +350,12 @@ class OrdersPage extends Component {
                 }
             };
         });
-        const { data, loading } = this.state;
+        const { data, loading,filteredData } = this.state;
+        const options = data.map((item,index) => {
+            return {
+                label:item.id.toString(),value:item.id.toString()
+            }
+        });
         if (this.state.errorMessage) {
             return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
                 <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
@@ -328,8 +367,16 @@ class OrdersPage extends Component {
         {
         return (
             <Layout>
-                <div>
-                   <div style={{display:"inline-flex", marginTop:"1em"}}><p style={{marginTop:"3px",marginRight:"5px"}}>Filter orders by: </p>
+                <div style={{marginBottom:"1em", marginTop:"1em" }}>
+                <Button style={{ float:"left" }} onClick={this.exportToExcel}>Export to Excel</Button>
+                    <Link to="/orders/create-new-order">
+                        <Button style={{float:"right", background: "#0AC035",}}
+                                type="primary">New order</Button>
+                    </Link>
+                </div>
+                <Content>
+                <div style={{display:"inline-flex", marginTop:"1em"}}>
+                    <p style={{marginTop:"3px",marginRight:"5px"}}>Filter orders by: </p>
                        <Select defaultValue={"All"} mode="single"  style={{ width: 120 }}  onChange={this.filterOrdersByStatus}>
                            <Select.Option value="ALL">All</Select.Option>
                            <Select.Option value="WAITING">Waiting</Select.Option>
@@ -338,16 +385,16 @@ class OrdersPage extends Component {
                            <Select.Option value="CANCELLED">Cancelled</Select.Option>
                        </Select>
                    </div>
-                    <Link to="/orders/create-new-order">
-                        <Button style={{float:"right", background: "#0AC035",marginBottom:"1em", marginTop:"1em" }}
-                                type="primary">New order</Button>
-                    </Link>
-                </div>
-                <Content>
                     <div style={{marginBottom:"1em"}}>
-                        <Search  allowClear placeholder="Search order by id" onSearch={this.onSearch}  />
+                    {/* <AutoComplete options={options} onSelect={this.onSearch} 
+                                  filterOption={(inputValue, option) =>
+                                                option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1 }>
+                        <Input.Search size="large" placeholder="Search order by id" enterButton allowClear/>
+                    </AutoComplete> */}
+                        <Search  allowClear placeholder="Search order by id" onChange={this.onChange} />
                     </div>
-                    <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>
+                   
+                    <Table components={components} bordered dataSource={filteredData} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>
                 </Content>
             </Layout>
         );

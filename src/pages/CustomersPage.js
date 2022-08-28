@@ -7,8 +7,11 @@ import {customersDataColumns} from "../tableColumnsData/customersDataColumns";
 import EditableTableCell from "../components/EditableTableCell";
 import {Link} from "react-router-dom";
 import authService from "../services/auth.service";
-import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
+import {CheckCircleFilled, InfoCircleFilled, LoginOutlined} from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
+import { downloadExcel } from "react-export-table-to-excel";
+
+const header = ["Id", "Name", "Address","City","State","Zip","Contact Person","Contact Email"];
 
 class CustomersPage extends Component {
     constructor() {
@@ -20,6 +23,7 @@ class CustomersPage extends Component {
             errorMessage:null
         };
         this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
+        this.exportToExcel = this.exportToExcel.bind(this);
     }
     getUserRole(){
         if(authService.getCurrentUser()===null)
@@ -54,7 +58,9 @@ class CustomersPage extends Component {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {
@@ -75,7 +81,9 @@ class CustomersPage extends Component {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {
@@ -106,7 +114,9 @@ class CustomersPage extends Component {
                     var message=JSON.stringify(error.response.data.error_message);
                     if(message.includes("The Token has expired"))
                     {
-                        this.setState({errorMessage:"Your token has expired"})
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
                     }
                     else
                     {
@@ -134,6 +144,17 @@ class CustomersPage extends Component {
             icon: <InfoCircleFilled style={{ color: '#f53333' }} />
         });
     };
+    exportToExcel()
+    {
+      downloadExcel({
+        fileName: "Customers",
+        sheet: "Sheet 1",
+        tablePayload: {
+          header,
+          body:this.state.data,
+        },
+      });
+    }
     render() {
         const components = {
             body: {
@@ -141,6 +162,7 @@ class CustomersPage extends Component {
                 cell: EditableTableCell
             }
         };
+        
         const columns = customersDataColumns.map(col => {
             if (col.dataIndex === 'actions') {
                 return {
@@ -202,16 +224,20 @@ class CustomersPage extends Component {
         {
         return (
             <Layout>
-                {this.getUserRole().isAdmin&&(
-                    <div>
-                        <Link to="/add-customer">
-                            <Button style={{float:"right", background: "#0AC035",marginBottom:"1em", marginTop:"1em" }} type="primary">New customer</Button>
-                        </Link>
+                
+                    <div style={{marginBottom:"1em", marginTop:"1em"}}>
+                    <Button onClick={this.exportToExcel}>Export to Excel</Button>
+                        {this.getUserRole().isAdmin&&(
+                            <Link to="/add-customer">
+                                <Button style={{float:"right", background: "#0AC035" }} type="primary">New customer</Button>
+                            </Link>
+                         )}
                     </div>
-                )}
+               
                 <Content style={{marginTop:"1em"}}>
                     <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>
                 </Content>
+               
             </Layout>
         );
     }

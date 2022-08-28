@@ -4,6 +4,7 @@ import {Button, Col, Form, Input, notification, Row, Space, Typography} from "an
 import API from "../server-apis/api";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import {Link} from "react-router-dom";
+import authService from '../services/auth.service';
 const { Text } = Typography;
 
 class SettingsPage extends Component {
@@ -36,7 +37,9 @@ class SettingsPage extends Component {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {
@@ -63,7 +66,9 @@ class SettingsPage extends Component {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {
@@ -88,7 +93,9 @@ class SettingsPage extends Component {
                 if(message===null){
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {

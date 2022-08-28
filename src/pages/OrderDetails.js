@@ -6,6 +6,8 @@ import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import OrderedProductsTable from "../components/OrderedProductsTable";
 import AddNewProductsToOrder from "../components/AddNewProductsToOrder";
 import {Link} from "react-router-dom";
+import authService from '../services/auth.service';
+const { RangePicker } = DatePicker;
 const { Text } = Typography;
 
 class OrderDetails extends Component {
@@ -24,19 +26,31 @@ class OrderDetails extends Component {
             errorMessage: null,
             isLoaded: false,
             isModalVisible:false
+            
         }
         this.token="Bearer "+ JSON.parse(localStorage.getItem("token"));
         this.onFinish=this.onFinish.bind(this);
         this.onFinishFailed=this.onFinishFailed.bind(this);
-        this.handler = this.handler.bind(this)
+        this.handler = this.handler.bind(this);
+        this.removehandler = this.removehandler.bind(this);
+        this.updateTotalPrice=this.updateTotalPrice.bind(this);
     }
-    handler(order,newProduct) {
+    updateTotalPrice(price) {
+        this.setState({
+            totalOrderPrice:price
+        });
+    }
+    removehandler(updatedProducts)
+    {
+        this.setState({products: updatedProducts });
+    }
+handler(order,newProduct) {
         if(!this.state.isNewOrder)
         {
             this.setState({
                 data:order,
                 products:  [...this.state.products,newProduct]
-            })
+            });
         }
         else
         {
@@ -118,7 +132,9 @@ class OrderDetails extends Component {
                     var message=JSON.stringify(error.response.data.error_message);
                     if(message.includes("The Token has expired"))
                     {
-                        this.setState({errorMessage:"Your token has expired"})
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
                     }
                     else
                     {
@@ -155,7 +171,9 @@ class OrderDetails extends Component {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {
@@ -187,6 +205,7 @@ class OrderDetails extends Component {
             }
             return productInfo;
         });
+
         if (products.length===0)
         {
             this.errorHappend("Please add products to create order");
@@ -201,7 +220,9 @@ class OrderDetails extends Component {
                     var message=JSON.stringify(error.response.data.error_message);
                     if(message.includes("The Token has expired"))
                     {
-                        this.setState({errorMessage:"Your token has expired"})
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
                     }
                     else
                     {
@@ -236,7 +257,9 @@ class OrderDetails extends Component {
                     var message=JSON.stringify(error.response.data.error_message);
                     if(message.includes("The Token has expired"))
                     {
-                        this.setState({errorMessage:"Your token has expired"})
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
                     }
                     else
                     {
@@ -244,7 +267,7 @@ class OrderDetails extends Component {
                     }
                     this.errorHappend("Failed to save");
                     console.error('There was an error!', error);
-                });;
+                });
         }
     };
     onFinishFailed = (errorInfo) => {
@@ -286,6 +309,9 @@ class OrderDetails extends Component {
         else {
             header=<Text style={{fontSize:"22px"}} >Create new order</Text>
         }
+        const disabledDate = (current) => {
+            return current && current < moment().endOf('day');
+          };
         let options = []
         if (customers.length > 0) {
             customers.forEach(role => {
@@ -309,9 +335,9 @@ class OrderDetails extends Component {
                 <Space direction="vertical" style={{width:"100%"}}>
                     {header}
                     <Button type="default" onClick={this.showModal} style={{float:"right", marginRight:"4.5em"}} size="middle"> Add more products to the order</Button>
-                    <Modal title="Add product to the order" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel}
+                    <Modal title="Add product to the order" visible={isModalVisible} destroyOnClose={true} onOk={this.handleOk} onCancel={this.handleCancel}
                            footer={[<Button key="back" onClick={this.handleCancel}> Cancel </Button>]}>
-                        <AddNewProductsToOrder orderId={data.id} token={this.token} handler={this.handler} isNewOrder={isNewOrder}/>
+                        <AddNewProductsToOrder orderId={data.id} token={this.token} handler={this.handler} isNewOrder={isNewOrder} products={products}/>
                     </Modal>
                     <Form name="basic"
                         initialValues={initialFormValues}
@@ -324,7 +350,7 @@ class OrderDetails extends Component {
                                     </Form.Item>
 
                                     <Form.Item label="Shipping date" name="shippmentDate" rules={[ {required: true,message: 'Please pick a date',}, ]}>
-                                        <DatePicker format="DD.MM.YYYY" onChange={this.onChange} picker="date" />
+                                        <DatePicker format="DD.MM.YYYY" disabledDate={disabledDate} onChange={this.onChange} picker="date" />
                                     </Form.Item>
 
                                     <Form.Item label="Status" name="status" rules={[ {required: true,message: 'Please pick a status',}, ]} >
@@ -360,7 +386,7 @@ class OrderDetails extends Component {
                             <Col className="gutter-row" span={15}>
                                 <div style={{ padding: '8px' }}>
                                     <h3>Ordered products</h3>
-                                    <OrderedProductsTable orderId={data.id} products={products} token={this.token}/>
+                                    <OrderedProductsTable orderId={data.id} removehandler={this.removehandler} products={products} token={this.token} updateTotalPrice={this.updateTotalPrice}/>
                                 </div>
                             </Col>
                         </Row>

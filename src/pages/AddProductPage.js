@@ -1,30 +1,61 @@
 import React, {Component} from 'react';
 import '@ant-design/compatible/assets/index.css';
-import {Button, Form, Card, Input, InputNumber, Row, Col, notification, Space} from "antd";
+import {Button, Form, Card, Input, InputNumber, Row, Col, notification, Space,Select} from "antd";
 import {Content} from "antd/es/layout/layout";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import API from "../server-apis/api";
 import Text from "antd/es/typography/Text";
 import {Link} from "react-router-dom";
-
+import authService from '../services/auth.service';
+const materialOptions = [
+    {
+      value: 'Fabric',
+    },
+    {
+      value: 'Leather',
+    },
+    {
+      value: 'Plastic',
+    },
+    {
+        value: 'Steel',
+    },
+    {
+        value: 'Acrylic',
+    },
+    {
+        value: 'Glass',
+    },
+    {
+        value: 'Wood',
+    }
+  ];
 class AddProductPage extends Component {
     constructor(props) {
         super(props);
         this.state={
-            errorMessage:null
+            errorMessage:null,
+            options:materialOptions,
+            chosenMaterial:""
         }
         this.token="Bearer "+ JSON.parse(localStorage.getItem("token"));
     }
+    
     onFinish = (values) => {
         API.post(`/products/add`,values,{ headers: { Authorization: this.token}})
             .then((res) => {
                 this.successfullyAdded();
+                 setInterval(() => {
+                    window.location.href = 'https://furntrade.web.app/products';
+                  }, 1000);
             })
             .catch(error => {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {
@@ -56,6 +87,7 @@ class AddProductPage extends Component {
         });
     };
     render() {
+        const {options} = this.state;
         if (this.state.errorMessage) {
             return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
                 <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
@@ -98,7 +130,7 @@ class AddProductPage extends Component {
                                                pattern: /^[a-zA-Z0-9.# ]+$/,
                                                message: 'Material can only include letters or numbers',
                                            }]}>
-                                    <Input/>
+                                    <Select allowClear options={options}/>
                                 </Form.Item>
 
                                 <Form.Item label="Price" name="price"

@@ -9,24 +9,38 @@ import {Link} from "react-router-dom";
 import Search from "antd/es/input/Search";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
+import { downloadExcel } from "react-export-table-to-excel";
+import authService from '../services/auth.service';
+
+const header = ["Id", "Name", "Model","Material","Color","Price"];
 
 class ProductsPage extends Component {
     constructor(props) {
         super(props);
         this.state = {
             data: [],
-            // pagination: {
-            //     current: 1,
-            //     pageSize: 10,
-            // },
             loading: true,
             editingKey: "",
-            errorMessage:null
+            errorMessage:null,
+            filteredData:[]
         };
         this.token = "Bearer " + JSON.parse(localStorage.getItem("token"));
         this.onSearch = this.onSearch.bind(this);
-    }
+        this.exportToExcel = this.exportToExcel.bind(this);
+        this.onChange = this.onChange.bind(this);
 
+    }
+    exportToExcel()
+    {
+      downloadExcel({
+        fileName: "Products",
+        sheet: "Sheet 1",
+        tablePayload: {
+          header,
+          body:this.state.data,
+        },
+      });
+    }
     isEditing = record => {
         return record.id === this.state.editingKey;
     };
@@ -49,14 +63,16 @@ class ProductsPage extends Component {
                 else
                 {
                 const products = res.data._embedded.productList;
-                this.setState({loading: false,data:products });
+                this.setState({loading: false,data:products,filteredData:products });
                 }
             })
             .catch(error => {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
-                    this.setState({errorMessage:"Your token has expired"})
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
                 }
                 else
                 {
@@ -71,13 +87,15 @@ class ProductsPage extends Component {
         API.delete(`/products/${id}`,{ headers: { Authorization: this.token}})
         .then(() => {
             let updatedProducts = [...this.state.data].filter(i => i.id !== id);
-            this.setState({data: updatedProducts});
+            this.setState({data: updatedProducts,filteredData:updatedProducts});
             this.successfullyAdded("Product is deleted");
         }).catch(error => {
             var message=JSON.stringify(error.response.data.error_message);
             if(message.includes("The Token has expired"))
             {
-                this.setState({errorMessage:"Your token has expired"})
+                this.setState({errorMessage:"Your token has expired."})
+                this.errorHappend("Your token has expired.");
+                authService.logout();
             }
             else
             {
@@ -106,14 +124,16 @@ class ProductsPage extends Component {
             API.put(`/products/update/${id}`, row,{headers: { Authorization: this.token}})
                 .then((response )=>
                 {
-                    this.setState({ data: newData, editingKey: "" });
+                    this.setState({ data: newData, editingKey: "",filteredData:newData });
                     this.successfullyAdded("Product is updated");
                 })
                 .catch(error => {
                     var message=JSON.stringify(error.response.data.error_message);
                     if(message.includes("The Token has expired"))
                     {
-                        this.setState({errorMessage:"Your token has expired"})
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
                     }
                     else
                     {
@@ -143,7 +163,9 @@ class ProductsPage extends Component {
                     var message=JSON.stringify(error.response.data.error_message);
                     if(message.includes("The Token has expired"))
                     {
-                        this.setState({errorMessage:"Your token has expired"})
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
                     }
                     else
                     {
@@ -171,6 +193,19 @@ class ProductsPage extends Component {
             icon: <InfoCircleFilled style={{ color: '#f53333' }} />
         });
     };
+    onChange = (input) => {
+        let value = input.target.value.toLowerCase();
+        let result = [];
+        if(value===""||this.hasWhiteSpace(value))
+        {
+            result=this.state.data;
+            this.setState({filteredData:result});
+            return;
+        }
+       result = this.state.data.filter((item) => {return item.name.search(value) !== -1});
+       this.setState({filteredData:result});
+    }
+
     render() {
         const components = {
             body: {
@@ -226,7 +261,8 @@ class ProductsPage extends Component {
                 }
             };
         });
-        const { data, loading } = this.state;
+        
+        const { data, loading,filteredData} = this.state;
         if (this.state.errorMessage) {
             return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
                 <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
@@ -238,17 +274,18 @@ class ProductsPage extends Component {
         {
         return (
             <Layout>
-                <div>
+                <div style={{marginBottom:"1em", marginTop:"1em"}}>
+                <Button  style={{float:"left"}} onClick={this.exportToExcel}>Export to Excel</Button>
                     <Link to="/add-product">
-                        <Button style={{float:"right", background: "#0AC035",marginBottom:"1em", marginTop:"1em" }}
+                        <Button style={{float:"right", background: "#0AC035" }}
                                 type="primary">New product</Button>
                     </Link>
                 </div>
                 <Content>
                     <div style={{marginBottom:"1em"}}>
-                        <Search placeholder="Search products by name" onSearch={this.onSearch}  />
+                        <Search placeholder="Search products by name"  onChange={this.onChange} />
                     </div>
-                    <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>
+                    <Table components={components} bordered dataSource={filteredData} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>
                 </Content>
             </Layout>
         );
