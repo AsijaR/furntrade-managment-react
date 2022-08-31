@@ -228,7 +228,10 @@ class ProductsPage extends Component {
                 </span>
                         ) : (
                             <Space size='middle'>
-                                <Typography.Link disabled={this.state.editingKey !== ''} onClick={() => this.edit(record.id)}>Edit</Typography.Link>
+                                <Link to={`${record.id}`}>
+                                    <span>Edit</span>
+                                </Link>
+                                {/* <Typography.Link disabled={this.state.editingKey !== ''} onClick={() => this.edit(record.id)}>Edit</Typography.Link> */}
                                 <Popconfirm title='Are you sure you want to delete this product?' onConfirm={() => this.remove(record.id)}>
                                     <Typography.Link disabled={this.state.editingKey !== ''} type="danger">Delete</Typography.Link>
                                 </Popconfirm>

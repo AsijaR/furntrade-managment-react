@@ -14,7 +14,6 @@ import { downloadExcel } from "react-export-table-to-excel";
 import moment from 'moment';
 import authService from '../services/auth.service';
 
-//const header = ["Id", "Shippment Date", "Status","Note 1","Note 2","Customer","Contact Person"];
 const header = ["Id", "Customer", "Shippment Date","Status","Note 1","Note 2","Contact Person"];
 
 class OrdersPage extends Component {

@@ -91,6 +91,7 @@ class MainLayoutPage extends Component {
                                     <Routes>
                                         <Route exact path="/" element={<ProductsPage />} />
                                         <Route exact path="/products"  element={<ProductsPage />} />
+                                        <Route exact path="/products/:id"  element={<AddProductPage />} />
                                         <Route path="/add-product"  element={<AddProductPage />} />
                                         <Route path="/customers"  element={<CustomersPage />} />
                                         {this.state.hasAdminRole &&

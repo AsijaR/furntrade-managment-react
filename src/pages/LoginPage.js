@@ -103,15 +103,15 @@ class LoginPage extends Component{
                     <Col span={8} style={{backgroundColor:"#f5f7f6", width:"80%", height:"80%",marginTop:"5em"}}>
                         <div style={{marginLeft:"4em",marginRight:"4em",marginTop:"3em"}}>
                             <Typography.Title level={3} style={{marginBottom:"2em"}}>Please login to access to the system</Typography.Title>
-                            <Form name="addProductForm"
+                            <Form name="loginForm"
                                 layout="vertical"
                                 onFinish={this.onFinish}
                                 // onFinishFailed={this.onFinishFailed}
                                 autoComplete="off">
-                                <Form.Item label="Username" name="username" rules={[ {required: true,message: 'Please enter name',}, ]}>
+                                <Form.Item label="Username" name="username" rules={[ {required: true,message: 'Please enter username',}, ]}>
                                     <Input />
                                 </Form.Item>
-                                <Form.Item label="Password" name="password" rules={[ {required: true,message: 'Please enter model',}, ]}>
+                                <Form.Item label="Password" name="password" rules={[ {required: true,message: 'Please enter password',}, ]}>
                                     <Input.Password/>
                                 </Form.Item>
                                 <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
