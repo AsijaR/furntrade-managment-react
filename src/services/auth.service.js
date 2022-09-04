@@ -12,16 +12,21 @@ class AuthService {
         params.append('password', password);
         return API.post("login", params)
             .then((response) => {
+                console.log("asija"+response);
                  if (response.data.access_token) {
                      localStorage.setItem('token', JSON.stringify(response.data.access_token));
                  }
                 return response.data;
-            });
+             });//.catch((error)=>{
+            //     console.log("upsss");
+            //     console.log(error);
+            // });
     }
 
     logout() {
         localStorage.removeItem("token");
         setInterval(() => {
+            // window.location.href = 'http://localhost:3000/login';
             window.location.href = 'https://furntrade.web.app/login';
           }, 1000);
     }

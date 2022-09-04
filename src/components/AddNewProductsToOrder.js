@@ -84,6 +84,7 @@ class AddNewProductsToOrder extends Component {
                 quantity: values.quantity
             };
             this.props.handler(this.state.data,product);
+            this.successfullyAdded("Product is successfully added to the order.");
         }
     };
     componentDidMount() 

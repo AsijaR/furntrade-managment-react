@@ -215,7 +215,7 @@ class ProductsPage extends Component {
             this.setState({filteredData:result});
             return;
         }
-       result = this.state.data.filter((item) => {return item.name.search(value) !== -1});
+        result= this.state.data.filter((item) => {return item.name.toLowerCase().includes(value)});
        this.setState({filteredData:result});
     }
     orderByPrice= (input) => {

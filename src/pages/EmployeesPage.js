@@ -52,7 +52,7 @@ class EmployeesPage extends Component {
                     this.setState({loading: false,data:null });
                 }
                 else {
-                    const employees = res.data._embedded.employeeInfoDtoList;
+                    const employees = res.data._embedded.employeeInfoDtoList.filter(i => i.username !== "admin");
                     this.setState({loading: false, data: employees, token: token});
                 }
             }).catch((error)=>{

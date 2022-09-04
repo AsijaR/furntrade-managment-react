@@ -24,6 +24,7 @@ class MainLayoutPage extends Component {
         super();
         this.state = {
         collapsed: false,
+        userValid:false,
         hasAdminRole:authService.getCurrentUser().isAdmin,
         };
     }
@@ -31,9 +32,11 @@ class MainLayoutPage extends Component {
         if(authService.getCurrentUser()===null)
         {
             window.location.reload(false);
-            return false;
+            this.setState({userValid:false})
         }
-        else return true;
+        else 
+        this.setState({userValid:true});
+
     }
     onCollapse = collapsed => {
         console.log(collapsed);
@@ -43,12 +46,12 @@ class MainLayoutPage extends Component {
         authService.logout();
     };
     render() {
-        if(this.isUserLoggedOrTokenExpired())
-        {
-            return (
+        const{userValid}=this.state;
+        if(!userValid)   {
+        return (
                 <Router>
                     <Layout style={{ minHeight: '100vh' }}>
-                        <Sider collapsible collapsed={this.state.collapsed} onCollapse={this.onCollapse}>
+            <Sider collapsible collapsed={this.state.collapsed} onCollapse={this.onCollapse}>
                             <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
                                 <Menu.Item key="1" icon={<FaCouch/>}>
                                     <Link to="/products">
@@ -109,16 +112,20 @@ class MainLayoutPage extends Component {
                 </Router>
             );
         }
-        else
-        {
-            return(
-            <Space>
-                <Text>You need to login to access this page</Text>
-                <Link to="/login">
-                    <span>Go to login page</span>
-                </Link>
-            </Space>)
+        else{
+            return <LoginPage/>
         }
+        
+        // else
+        // {
+        //     return(
+        //     <Space>
+        //         <Text>You need to login to access this page</Text>
+        //         <Link to="/login">
+        //             <span>Go to login page</span>
+        //         </Link>
+        //     </Space>)
+        // }
     }
 }
 
