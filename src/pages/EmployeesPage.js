@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Button, Layout, notification, Popconfirm, Space, Table,Typography} from "antd";
+import {Button, Layout, notification, Popconfirm, Space, Spin, Table,Typography} from "antd";
 import {Link} from "react-router-dom";
 import {Content} from "antd/es/layout/layout";
 import EditableTableRow, {EditableContext} from "../components/EditableTableRow";
@@ -55,19 +55,19 @@ class EmployeesPage extends Component {
                     const employees = res.data._embedded.employeeInfoDtoList;
                     this.setState({loading: false, data: employees, token: token});
                 }
-            }).
-        catch((error)=>{
-            var message=JSON.stringify(error.response.data.error_message);
-            if(message.includes("The Token has expired"))
-            {
-                this.setState({errorMessage:"Your token has expired"});
-                this.errorHappend("Your token has expired.");
-                authService.logout();
-            }
-            else
-            {
-                this.setState({errorMessage:error,loading: false,data:null})
-            }
+            }).catch((error)=>{
+                try {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
+                    }
+                } 
+                catch (error) {
+                    this.setState({errorMessage:error})
+                }
             this.errorHappend("Failed to delete");
             console.error('There was an error!', error);
         });
@@ -80,15 +80,16 @@ class EmployeesPage extends Component {
                 this.successfullyAdded("Employee is deleted. It wont have any access to the website anymore.")
             })
             .catch((error)=>{
-                var message=JSON.stringify(error.response.data.error_message);
-                if(message.includes("The Token has expired"))
-                {
-                    this.setState({errorMessage:"Your token has expired"});
-                    this.errorHappend("Your token has expired.");
-                    authService.logout();
-                }
-                else
-                {
+                try {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
+                    }
+                } 
+                catch (error) {
                     this.setState({errorMessage:error})
                 }
                 this.errorHappend("Failed to delete");
@@ -117,14 +118,17 @@ class EmployeesPage extends Component {
                     this.successfullyAdded("Empolyee info is updated")
                 })
                 .catch(error => {
-                    var message=JSON.stringify(error.response.data.error_message);
-                    if(message.includes("The Token has expired"))
-                    {
-                        this.setState({errorMessage:"Your token has expired"})
-                    }
-                    else
-                    {
-                        this.setState("Failed to save changes")
+                    try {
+                        var message=JSON.stringify(error.response.data.error_message);
+                        if(message.includes("The Token has expired"))
+                        {
+                            this.setState({errorMessage:"Your token has expired"});
+                            this.errorHappend("Your token has expired.");
+                            authService.logout();
+                        }
+                    } 
+                    catch (error) {
+                        this.setState({errorMessage:error})
                     }
                     this.errorHappend(error);
                     console.error('There was an error!', error);
@@ -211,7 +215,12 @@ class EmployeesPage extends Component {
                     <Button>Click here to login again</Button>
                 </Link>)}
             </Space>;
-        } else
+        }
+        else if(loading)
+        {
+            return <Spin/>
+        } 
+        else
         {
         return (
             <Layout>

@@ -22,15 +22,16 @@ class AddCustomerPage extends Component {
                 this.successfullyAdded();
             })
             .catch(error => {
-                var message=JSON.stringify(error.response.data.error_message);
-                if(message.includes("The Token has expired"))
-                {
-                    this.setState({errorMessage:"Your token has expired"});
-                    this.errorHappend("Your token has expired.");
-                    authService.logout();
-                }
-                else
-                {
+                try {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
+                    }
+                } 
+                catch (error) {
                     this.setState({errorMessage:error})
                 }
                 this.errorHappend(error);

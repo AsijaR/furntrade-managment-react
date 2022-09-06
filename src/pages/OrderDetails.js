@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Row, Col, Typography, Input, Form, Select, DatePicker, Space, Button, Modal, Divider, notification} from "antd";
+import {Row, Col, Typography, Input, Form, Select, DatePicker, Space, Button, Modal, Divider, notification, Spin} from "antd";
 import moment from 'moment';
 import API from "../server-apis/api";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
@@ -7,7 +7,6 @@ import OrderedProductsTable from "../components/OrderedProductsTable";
 import AddNewProductsToOrder from "../components/AddNewProductsToOrder";
 import {Link} from "react-router-dom";
 import authService from '../services/auth.service';
-const { RangePicker } = DatePicker;
 const { Text } = Typography;
 
 class OrderDetails extends Component {
@@ -34,22 +33,31 @@ class OrderDetails extends Component {
         this.handler = this.handler.bind(this);
         this.removehandler = this.removehandler.bind(this);
         this.updateTotalPrice=this.updateTotalPrice.bind(this);
+        this.selectCustomeronChange=this.selectCustomeronChange.bind(this);
     }
     updateTotalPrice(price) {
         this.setState({
             totalOrderPrice:price
         });
     }
+    selectCustomeronChange(value)
+    {
+        var customerName=value.split(",")[0];
+        this.setState({selectedCustomer:customerName});
+    }
     removehandler(updatedProducts)
     {
         this.setState({products: updatedProducts });
     }
 handler(order,newProduct) {
+    var currentOrderPrice=this.state.totalOrderPrice+(newProduct.price*newProduct.quantity);
         if(!this.state.isNewOrder)
         {
+           
             this.setState({
                 data:order,
-                products:  [...this.state.products,newProduct]
+                products:  [...this.state.products,newProduct],
+                totalOrderPrice:currentOrderPrice
             });
         }
         else
@@ -65,7 +73,6 @@ handler(order,newProduct) {
             }
             else
             {
-                var currentOrderPrice=this.state.totalOrderPrice+(newProduct.price*newProduct.quantity);
                 this.setState({
                     //   newOrderData:order,
                     products:  [...this.state.products,newProduct],
@@ -91,14 +98,14 @@ handler(order,newProduct) {
             return newObj;
         });
     }
-    async componentDidMount() {
+    componentDidMount() {
         let url = window.location.pathname;
         if(url!=="/orders/create-new-order")
         {
             // var currentCustomer="";
             var orderId = url.substring(url.lastIndexOf('/') + 1);
             this.setState({orderId:orderId})
-            await API.get(`orders/${orderId}`,{ headers: { Authorization: this.token}})
+            API.get(`orders/${orderId}`,{ headers: { Authorization: this.token}})
                 .then(
                     (res) => {
                         const orderDetails = res.data;
@@ -111,7 +118,7 @@ handler(order,newProduct) {
                                 price: p.product.price,
                                 quantity: p.quantity,
                             }
-                        })
+                        });
                         this.setState({
                             isLoaded: true,
                             isNewOrder:false,
@@ -129,15 +136,16 @@ handler(order,newProduct) {
                         });
                     }
                 ).catch(error => {
-                    var message=JSON.stringify(error.response.data.error_message);
-                    if(message.includes("The Token has expired"))
-                    {
-                        this.setState({errorMessage:"Your token has expired"});
-                        this.errorHappend("Your token has expired.");
-                        authService.logout();
-                    }
-                    else
-                    {
+                    try {
+                        var message=JSON.stringify(error.response.data.error_message);
+                        if(message.includes("The Token has expired"))
+                        {
+                            this.setState({errorMessage:"Your token has expired"});
+                            this.errorHappend("Your token has expired.");
+                            authService.logout();
+                        }
+                    } 
+                    catch (error) {
                         this.setState({errorMessage:error})
                     }
                     this.errorHappend("Failed to load data");
@@ -150,24 +158,30 @@ handler(order,newProduct) {
                     status: "Waiting"
                 }});
         }
-        await API.get(`customers`,{ headers: { Authorization: this.token}})
-            .then(
-                (res) => {
-                    const customerList = res.data._embedded.customerList;
-                    var c=[];
-                    var name="";
-                    customerList.forEach(x=>{
-                        c.push(this.selectSomeProperties(x));
-                    })
-                    var fullNameArray = this.reformatArrray(c);
-                    fullNameArray.forEach(x=>{
-                        if(x.fullName.includes(this.state.selectedCustomer))
-                           name=x.fullName;
-                    })
-                    this.setState({customers:fullNameArray,selectedCustomer:name});
-                }
-            )
-            .catch(error => {
+        this.getCustomer();
+        
+    }
+    getCustomer()
+    {
+        API.get(`customers`,{ headers: { Authorization: this.token}})
+        .then(
+            (res) => {
+                const customerList = res.data._embedded.customerList;
+                var c=[];
+                var name="";
+                customerList.forEach(x=>{
+                    c.push(this.selectSomeProperties(x));
+                })
+                var fullNameArray = this.reformatArrray(c);
+                fullNameArray.forEach(x=>{
+                    if(x.fullName.includes(this.state.selectedCustomer))
+                       name=x.fullName;
+                })
+                this.setState({customers:fullNameArray,selectedCustomer:name});
+            }
+        )
+        .catch(error => {
+            try {
                 var message=JSON.stringify(error.response.data.error_message);
                 if(message.includes("The Token has expired"))
                 {
@@ -175,13 +189,13 @@ handler(order,newProduct) {
                     this.errorHappend("Your token has expired.");
                     authService.logout();
                 }
-                else
-                {
-                    this.setState({errorMessage:error})
-                }
-                this.errorHappend("Failed to load data");
-                console.error('There was an error!', error);
-            });
+            } 
+            catch (error) {
+                this.setState({errorMessage:error})
+            }
+            this.errorHappend("Failed to load data");
+            console.error('There was an error!', error);
+        });
     }
     createNewOrder(customerName,values)
     {
@@ -217,15 +231,16 @@ handler(order,newProduct) {
                     console.log(res);
                 })
                 .catch(error => {
-                    var message=JSON.stringify(error.response.data.error_message);
-                    if(message.includes("The Token has expired"))
-                    {
-                        this.setState({errorMessage:"Your token has expired"});
-                        this.errorHappend("Your token has expired.");
-                        authService.logout();
-                    }
-                    else
-                    {
+                    try {
+                        var message=JSON.stringify(error.response.data.error_message);
+                        if(message.includes("The Token has expired"))
+                        {
+                            this.setState({errorMessage:"Your token has expired"});
+                            this.errorHappend("Your token has expired.");
+                            authService.logout();
+                        }
+                    } 
+                    catch (error) {
                         this.setState({errorMessage:error})
                     }
                     this.errorHappend("Failed to save");
@@ -234,16 +249,15 @@ handler(order,newProduct) {
         }
     }
     onFinish = (values) => {
-        var customerName=this.state.selectedCustomer.split(",")[0];
         if(this.state.isNewOrder)
         {
-            this.createNewOrder(customerName,values)
+            this.createNewOrder(this.state.selectedCustomer,values)
         }
         else
         {
             API.put(`/orders/update/${this.state.orderId}`,
                 {
-                    customerName:customerName,
+                    customerName:this.state.selectedCustomer,
                     shippmentDate:values.shippmentDate,
                     status:values.status,
                     note1:values.note1,
@@ -254,15 +268,16 @@ handler(order,newProduct) {
                     this.successfullyAdded("Order is updated");
                 })
                 .catch(error => {
-                    var message=JSON.stringify(error.response.data.error_message);
-                    if(message.includes("The Token has expired"))
-                    {
-                        this.setState({errorMessage:"Your token has expired"});
-                        this.errorHappend("Your token has expired.");
-                        authService.logout();
-                    }
-                    else
-                    {
+                    try {
+                        var message=JSON.stringify(error.response.data.error_message);
+                        if(message.includes("The Token has expired"))
+                        {
+                            this.setState({errorMessage:"Your token has expired"});
+                            this.errorHappend("Your token has expired.");
+                            authService.logout();
+                        }
+                    } 
+                    catch (error) {
                         this.setState({errorMessage:error})
                     }
                     this.errorHappend("Failed to save");
@@ -316,7 +331,7 @@ handler(order,newProduct) {
         if (customers.length > 0) {
             customers.forEach(role => {
                 let roleDate = {};
-                roleDate.value = role.id;
+                roleDate.value = role.fullName;
                 roleDate.label = role.fullName;
                 options.push(roleDate)
             })
@@ -329,7 +344,7 @@ handler(order,newProduct) {
                 </Link>)}
             </Space>;
         } else if (!isLoaded) {
-            return <div>Loading...</div>;
+            return  <Spin/>;
         } else {
             return (
                 <Space direction="vertical" style={{width:"100%"}}>
@@ -346,7 +361,7 @@ handler(order,newProduct) {
                             <Col className="gutter-row" span={8}>
                                 <div style={{ padding: '8px' }}>
                                     <Form.Item label="Customer" name="customer" rules={[ {required: true,message: 'Please pick a customer',}, ]}>
-                                        <Select mode="single" options={options} />
+                                        <Select mode="single" options={options} onChange={this.selectCustomeronChange}/>
                                     </Form.Item>
 
                                     <Form.Item label="Shipping date" name="shippmentDate" rules={[ {required: true,message: 'Please pick a date',}, ]}>

@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import '@ant-design/compatible/assets/index.css';
-import {Button, Form, Card, Input, InputNumber, Row, Col, notification, Space,Select,message, Upload } from "antd";
-import {Content} from "antd/es/layout/layout";
+import {Button, Form, Card, Input, InputNumber, Row, Col, notification, Space,Select,message, Upload, Spin } from "antd";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import API from "../server-apis/api";
 import Text from "antd/es/typography/Text";
@@ -72,15 +71,16 @@ class AddProductPage extends Component {
                     this.successfullyAdded("Product is updated");
                 })
                 .catch(error => {
-                    var message=JSON.stringify(error.response.data.error_message);
-                    if(message.includes("The Token has expired"))
-                    {
-                        this.setState({errorMessage:"Your token has expired"});
-                        this.errorHappend("Your token has expired.");
-                        authService.logout();
-                    }
-                    else
-                    {
+                    try {
+                        var message=JSON.stringify(error.response.data.error_message);
+                        if(message.includes("The Token has expired"))
+                        {
+                            this.setState({errorMessage:"Your token has expired"});
+                            this.errorHappend("Your token has expired.");
+                            authService.logout();
+                        }
+                    } 
+                    catch (error) {
                         this.setState({errorMessage:error})
                     }
                     this.errorHappend("Failed to save");
@@ -99,8 +99,11 @@ class AddProductPage extends Component {
             API.get(`/products/${productId}`,{headers: { Authorization: this.token}})
                 .then((response )=>
                 {
-                    console.log("poslo sam"+response.data);
+                  
                     var p=response.data;
+                    var photoString="";
+                    if(p.photo)
+                        photoString=p.photoBase64Info+","+p.photo;
                     this.setState({ isLoaded:true,
                         initialFormValues: {
                         name: p.name,
@@ -108,18 +111,19 @@ class AddProductPage extends Component {
                         color:p.color,
                         material:p.material,
                         price:p.price
-                    },productExist:true,photoBase64Info:p.photoBase64Info,productTitle:"Update product" });
+                    },productExist:true,photoBase64Info:photoString,productTitle:"Update product" });
                 })
                 .catch(error => {
-                    var message=JSON.stringify(error.response.data.error_message);
-                    if(message.includes("The Token has expired"))
-                    {
-                        this.setState({errorMessage:"Your token has expired"});
-                        this.errorHappend("Your token has expired.");
-                        authService.logout();
-                    }
-                    else
-                    {
+                    try {
+                        var message=JSON.stringify(error.response.data.error_message);
+                        if(message.includes("The Token has expired"))
+                        {
+                            this.setState({errorMessage:"Your token has expired"});
+                            this.errorHappend("Your token has expired.");
+                            authService.logout();
+                        }
+                    } 
+                    catch (error) {
                         this.setState({errorMessage:error})
                     }
                     this.errorHappend("Failed to save");
@@ -165,10 +169,16 @@ class AddProductPage extends Component {
             this.setState({loading:true});
           return;
         }
-    
+        if (info.file.status === 'uploading') {
+            this.errorHappend("Couldnt upload image right now, please wait or reload page.");
+            this.setState({ loading: true, image: null });
+            info.file.status = 'done';
+        }
+
         if (info.file.status === 'done') {
           // Get this url from response in real world.
           this.getBase64(info.file.originFileObj, (url) => {
+            console.log("nesto vrtin");
             this.setState({loading:false,photoBase64Info:url});
           });
         }
@@ -193,16 +203,16 @@ class AddProductPage extends Component {
               }, 1000);
         })
         .catch(error => {
-            console.log(error);
-            var message=JSON.stringify(error.response.data.error_message);
-            if(message.includes("The Token has expired"))
-            {
-                this.setState({errorMessage:"Your token has expired"});
-                this.errorHappend("Your token has expired.");
-                authService.logout();
-            }
-            else
-            {
+            try {
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
+                }
+            } 
+            catch (error) {
                 this.setState({errorMessage:error})
             }
             this.errorHappend(error);
@@ -247,7 +257,7 @@ class AddProductPage extends Component {
             </Space>;
         } 
         else if (!this.state.isLoaded) {
-            return <div>Loading...</div>;
+            return <Spin/>
         }
         else {
             return (

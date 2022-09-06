@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import '@ant-design/compatible/assets/index.css';
 import { Form,Button, Col, Input, notification, Row,Spin,Typography } from "antd";
-import {Content,Header} from "antd/es/layout/layout";
 import AuthService from "../services/auth.service";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 class LoginPage extends Component{
@@ -11,8 +10,7 @@ class LoginPage extends Component{
             username: "",
             password: "",
             loading: false,
-            message: "",
-            loginButtonClicked:false 
+            message: ""
         };
         this.onFinish = this.onFinish.bind(this);
         this.onChangeUsername = this.onChangeUsername.bind(this);
@@ -33,18 +31,17 @@ class LoginPage extends Component{
     onFinish = (values) => {
         this.setState({
             message: "",
-            loading: true,
-            loginButtonClicked:true
+            loading: true
         });
         AuthService.login(values.username, values.password)
             .then(() => {
                   //  this.props.history.push('/settings')
                     this.successfullyAdded();
                     this.setState({
-                        loading: false,
-                        loginButtonClicked: false
+                        loading: false
                     });
-                    window.location.href = 'https://furntrade.web.app/products';
+                    // window.location.href = 'https://furntrade.web.app/products';
+                    window.location.href = 'http://localhost:3000/products';
                 },
                     error => {
                         const resMessage =
@@ -56,8 +53,7 @@ class LoginPage extends Component{
                         this.errorHappend("Entered data is not correct.");
                         this.setState({
                             loading: false,
-                            message: resMessage,
-                            loginButtonClicked: false
+                            message: resMessage
                         });
                     }
             );
@@ -81,11 +77,10 @@ class LoginPage extends Component{
         });
     };
      render() {
-        const {loading,loginButtonClicked} = this.state;
-            if(loginButtonClicked){
-                return ( 
-                        <Spin tip="Loading..." loading={loading} style={{ left: "50%", position: "absolute",textAlign: "center",top: "50%"}}></Spin>
-                );
+        const {loading} = this.state;
+            if(loading){
+                return ( <Spin tip="Loading..." loading={loading} 
+                            style={{ left: "50%", position: "absolute",textAlign: "center",top: "50%"}}/> );
             }
             else{
                 return(

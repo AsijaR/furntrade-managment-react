@@ -11,6 +11,7 @@ class AddNewProductsToOrder extends Component {
         super(props);
         this.state= {
             data: [],
+            addingDataLoading:false,
             errorMessage: null
         };
         this.onFinish=this.onFinish.bind(this);
@@ -19,6 +20,7 @@ class AddNewProductsToOrder extends Component {
     onFinish = values => {
         if(!this.props.isNewOrder)
         {
+            console.log("nije nova");
             if(this.props.products.some(p=>p.id===values.product)){
                 notification.info({
                     message: `Notification`,
@@ -27,8 +29,11 @@ class AddNewProductsToOrder extends Component {
                     placement:"bottomRight",
                     icon: <InfoCircleFilled style={{ color: '#f53333' }} />
                 });
+                console.log("poslo parent"+ JSON.stringify(this.props.products));
+                console.log("values"+JSON.stringify(values));
             }
         else {
+                this.setState({addingDataLoading:true});
                 const params = new URLSearchParams();
                 params.append('quantity', values.quantity);
                 API.patch(`orders/${this.props.orderId}/add-product/${values.product}`, params, {headers: {Authorization: this.props.token}})
@@ -46,17 +51,20 @@ class AddNewProductsToOrder extends Component {
                         var addedProd = orderedProducts.slice(-1).pop();
                         this.props.handler(res.data, addedProd);
                         this.successfullyAdded("Product is successfully added to the order.");
+                        this.setState({addingDataLoading:false});
                     })
                     .catch(error => {
-                        var message = JSON.stringify(error.response.data.error_message);
-                        if (message.includes("The Token has expired")) {
-
-                            this.setState({errorMessage: "Your token has expired"});
-                            this.errorHappend("Your token has expired.");
-                            authService.logout();
+                        try {
+                            var message=JSON.stringify(error.response.data.error_message);
+                            if(message.includes("The Token has expired"))
+                            {
+                                this.setState({errorMessage:"Your token has expired"});
+                                this.errorHappend("Your token has expired.");
+                                authService.logout();
+                            }
                         } 
-                        else {
-                            this.setState({errorMessage: error})
+                        catch (error) {
+                            this.setState({errorMessage:error})
                         }
                         if (error.response.status === 403)
                             this.errorHappend("Product already exists in the order.");
@@ -78,24 +86,24 @@ class AddNewProductsToOrder extends Component {
             this.props.handler(this.state.data,product);
         }
     };
-    async componentDidMount() {
-        await API.get(`products`,{ headers: { Authorization: this.props.token}})
-            .then(
-                (res) => {
+    componentDidMount() 
+    {  
+       API.get(`products/all`,{ headers: { Authorization: this.props.token}}).then((res) => {
                     const products = res.data._embedded.productList;
                     this.setState({data:products});
                 }
             )
             .catch(error => {
-                var message=JSON.stringify(error.response.data.error_message);
-                if(message.includes("The Token has expired"))
-                {
-                    this.setState({errorMessage:"Your token has expired"});
-                    this.errorHappend("Your token has expired.");
-                    authService.logout();
-                }
-                else
-                {
+                try {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
+                    }
+                } 
+                catch (error) {
                     this.setState({errorMessage:error})
                 }
                 this.errorHappend("Failed to load data");
@@ -114,13 +122,13 @@ class AddNewProductsToOrder extends Component {
         notification.info({
             message: `Notification`,
             description:
-                `There was an error! ${error}`,
+                {error},
             placement:"bottomRight",
             icon: <InfoCircleFilled style={{ color: '#f53333' }} />
         });
     };
     render() {
-        const { errorMessage,data } = this.state;
+        const { errorMessage,data,addingDataLoading} = this.state;
         let options = []
         if (data.length > 0) {
             data.forEach(role => {
@@ -148,7 +156,7 @@ class AddNewProductsToOrder extends Component {
                     <InputNumber placeholder="Quantity" min={1}/>
                 </Form.Item>
                 <Form.Item>
-                    <Button type="primary" htmlType="submit">
+                    <Button type="primary" htmlType="submit" loading={addingDataLoading}>
                         Add product
                     </Button>
                 </Form.Item>

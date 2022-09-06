@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import AuthService from "../services/auth.service";
-import {Button, Col, Form, Input, notification, Row, Space, Typography} from "antd";
+import {Button, Col, Form, Input, notification, Row, Space, Spin, Typography} from "antd";
 import API from "../server-apis/api";
 import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import {Link} from "react-router-dom";
@@ -19,8 +19,8 @@ class SettingsPage extends Component {
         };
         this.token="Bearer "+ JSON.parse(localStorage.getItem("token"));
     }
-    async componentDidMount() {
-        await API.get(`users/${this.state.currentUser.username}`,{ headers: { Authorization: this.token}})
+    componentDidMount() {
+         API.get(`users/${this.state.currentUser.username}`,{ headers: { Authorization: this.token}})
             .then(res => {
                 this.setState({
                     user:res.data,
@@ -34,15 +34,16 @@ class SettingsPage extends Component {
                 })
             })
             .catch((error)=>{
-                var message=JSON.stringify(error.response.data.error_message);
-                if(message.includes("The Token has expired"))
-                {
-                    this.setState({errorMessage:"Your token has expired"});
-                    this.errorHappend("Your token has expired.");
-                    authService.logout();
-                }
-                else
-                {
+                try {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
+                    }
+                } 
+                catch (error) {
                     this.setState({errorMessage:error})
                 }
                 this.errorHappend(error);
@@ -63,15 +64,16 @@ class SettingsPage extends Component {
                 this.successfullyAdded("Your data is successflly changed!");
             })
             .catch((error)=>{
-                var message=JSON.stringify(error.response.data.error_message);
-                if(message.includes("The Token has expired"))
-                {
-                    this.setState({errorMessage:"Your token has expired"});
-                    this.errorHappend("Your token has expired.");
-                    authService.logout();
-                }
-                else
-                {
+                try {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
+                    }
+                } 
+                catch (error) {
                     this.setState({errorMessage:error})
                 }
                 this.errorHappend("Upps! Something went wrong. Please try again.");
@@ -88,19 +90,18 @@ class SettingsPage extends Component {
                 this.successfullyAdded("Password is successflly changed!");
             })
             .catch((error)=>{
-                console.log("greska"+error.response);
-                var message=JSON.stringify(error.response.data.error_message);
-                if(message===null){
-                if(message.includes("The Token has expired"))
-                {
-                    this.setState({errorMessage:"Your token has expired"});
-                    this.errorHappend("Your token has expired.");
-                    authService.logout();
-                }
-                else
-                {
+                try {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
+                    }
+                } 
+                catch (error) {
                     this.setState({errorMessage:error})
-                }}
+                }
                 this.errorHappend("Entered current password is wrong.");
                 console.error('There was an error!', error);
             });
@@ -136,7 +137,7 @@ class SettingsPage extends Component {
             </Space>;
         }
         else if (!this.state.isLoaded) {
-            return <div>Loading...</div>;
+            return <Spin/>
         }
         else {
         return (

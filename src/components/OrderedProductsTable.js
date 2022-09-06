@@ -68,25 +68,29 @@ class OrderedProductsTable extends Component {
             params.append('quantity', 0);
              API.patch(`orders/${this.props.orderId}/remove-product/${id}`, params, {headers: {Authorization: this.props.token}})
                 .then(() => {
-                    let updatedCustomers = [...this.state.data].filter(i => i.id !== id);
-                    this.setState({data: updatedCustomers,isRemoved:true});
-                    updatedCustomers.forEach(x=>{  total+=x.price*x.quantity;});
+                    let updatedProducts = [...this.state.data].filter(i => i.id !== id);
+                    updatedProducts.forEach(x=>{  total+=x.price*x.quantity;});
+                    this.setState({data: updatedProducts,isRemoved:true});
+                    this.props.removehandler(updatedProducts);
                     this.props.updateTotalPrice(total);
                     this.successfullyAdded("Product is deleted");
 
                 }).catch((error) => {
-                var message = JSON.stringify(error.response.data.error_message);
-                if (message.includes("The Token has expired")) {
-                    this.setState({errorMessage: "Your token has expired"});
-                    this.errorHappend("Your token has expired.");
-                    authService.logout();
-                } else {
-                    this.setState({errorMessage: error})
-                }
+                    try {
+                        var message=JSON.stringify(error.response.data.error_message);
+                        if(message.includes("The Token has expired"))
+                        {
+                            this.setState({errorMessage:"Your token has expired"});
+                            this.errorHappend("Your token has expired.");
+                            authService.logout();
+                        }
+                    } 
+                    catch (error) {
+                        this.setState({errorMessage:error})
+                    }
                 this.errorHappend("Failed to delete product");
                 console.error('There was an error!', error);
             });
-            //this.updateOrderTotalPrice(total);
         }
     }
     async updateOrderTotalPrice(total){
@@ -99,15 +103,16 @@ class OrderedProductsTable extends Component {
             this.successfullyAdded("Order is updated");
         })
         .catch(error => {
-            var message=JSON.stringify(error.response.data.error_message);
-            if(message.includes("The Token has expired"))
-            {
-                this.setState({errorMessage:"Your token has expired"});
-                this.errorHappend("Your token has expired.");
-                authService.logout();
-            }
-            else
-            {
+            try {
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
+                }
+            } 
+            catch (error) {
                 this.setState({errorMessage:error})
             }
             this.errorHappend("Failed to save");
@@ -149,13 +154,16 @@ class OrderedProductsTable extends Component {
                     this.successfullyAdded("Product info is updated")
                 })
                 .catch((error)=>{
-                    var message=JSON.stringify(error.response.data.error_message);
-                    if(message.includes("The Token has expired"))
-                    {
-                        this.setState({errorMessage:"Your token has expired"})
-                    }
-                    else
-                    {
+                    try {
+                        var message=JSON.stringify(error.response.data.error_message);
+                        if(message.includes("The Token has expired"))
+                        {
+                            this.setState({errorMessage:"Your token has expired"});
+                            this.errorHappend("Your token has expired.");
+                            authService.logout();
+                        }
+                    } 
+                    catch (error) {
                         this.setState({errorMessage:error})
                     }
                     this.errorHappend("Failed to save changes");
@@ -229,8 +237,7 @@ class OrderedProductsTable extends Component {
                     <Button>Click here to login again</Button>
                 </Link>
             </Space>;
-        } else
-        {
+        } else {
         return (
             <div>
                 <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>

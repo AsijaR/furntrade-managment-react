@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
-import {Button, Layout, notification, Popconfirm, Space, Table, Typography} from "antd";
+import {Button, Layout, notification, Popconfirm, Space, Table, Typography,Select,Card,Meta, Spin} from "antd";
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import API from '../server-apis/api';
 import {Content} from "antd/es/layout/layout";
 import {productDataColumns} from "../tableColumnsData/productDataColumns";
@@ -28,16 +29,19 @@ class ProductsPage extends Component {
         this.onSearch = this.onSearch.bind(this);
         this.exportToExcel = this.exportToExcel.bind(this);
         this.onChange = this.onChange.bind(this);
+        this.sortProducts = this.sortProducts.bind(this);
 
     }
     exportToExcel()
     {
+        var clone = this.state.data.slice(0);
+        clone.forEach(function(v){ delete v.photoBase64Info });
       downloadExcel({
         fileName: "Products",
         sheet: "Sheet 1",
         tablePayload: {
           header,
-          body:this.state.data,
+          body:clone,
         },
       });
     }
@@ -54,28 +58,34 @@ class ProductsPage extends Component {
     };
 
     componentDidMount() {
+        this.setState({loading:true});
         API.get(`products`,{ headers: { Authorization: this.token}})
             .then(res => {
                 if(!Object.keys(res.data).length){
-                    console.log("no data found");
                     this.setState({loading: false,data:null });
                 }
                 else
                 {
-                const products = res.data._embedded.productList;
+                    const prod = res.data._embedded.productList;
+                    const products=prod.map(x=>{
+                        x.photoBase64Info=x.photoBase64Info+","+x.photo;
+                        x.photo="";
+                        return x;
+                    });
                 this.setState({loading: false,data:products,filteredData:products });
                 }
             })
             .catch(error => {
-                var message=JSON.stringify(error.response.data.error_message);
-                if(message.includes("The Token has expired"))
-                {
-                    this.setState({errorMessage:"Your token has expired"});
-                    this.errorHappend("Your token has expired.");
-                    authService.logout();
-                }
-                else
-                {
+                try {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
+                    }
+                } 
+                catch (error) {
                     this.setState({errorMessage:error})
                 }
                 this.errorHappend("Failed to load data");
@@ -83,22 +93,23 @@ class ProductsPage extends Component {
         });
     }
 
-    async remove(id) {
+    remove(id) {
         API.delete(`/products/${id}`,{ headers: { Authorization: this.token}})
         .then(() => {
             let updatedProducts = [...this.state.data].filter(i => i.id !== id);
             this.setState({data: updatedProducts,filteredData:updatedProducts});
             this.successfullyAdded("Product is deleted");
         }).catch(error => {
-            var message=JSON.stringify(error.response.data.error_message);
-            if(message.includes("The Token has expired"))
-            {
-                this.setState({errorMessage:"Your token has expired."})
-                this.errorHappend("Your token has expired.");
-                authService.logout();
-            }
-            else
-            {
+            try {
+                var message=JSON.stringify(error.response.data.error_message);
+                if(message.includes("The Token has expired"))
+                {
+                    this.setState({errorMessage:"Your token has expired"});
+                    this.errorHappend("Your token has expired.");
+                    authService.logout();
+                }
+            } 
+            catch (error) {
                 this.setState({errorMessage:error})
             }
             this.errorHappend("Failed to remove");
@@ -128,15 +139,16 @@ class ProductsPage extends Component {
                     this.successfullyAdded("Product is updated");
                 })
                 .catch(error => {
-                    var message=JSON.stringify(error.response.data.error_message);
-                    if(message.includes("The Token has expired"))
-                    {
-                        this.setState({errorMessage:"Your token has expired"});
-                        this.errorHappend("Your token has expired.");
-                        authService.logout();
-                    }
-                    else
-                    {
+                    try {
+                        var message=JSON.stringify(error.response.data.error_message);
+                        if(message.includes("The Token has expired"))
+                        {
+                            this.setState({errorMessage:"Your token has expired"});
+                            this.errorHappend("Your token has expired.");
+                            authService.logout();
+                        }
+                    } 
+                    catch (error) {
                         this.setState({errorMessage:error})
                     }
                     this.errorHappend("Failed to save");
@@ -160,16 +172,17 @@ class ProductsPage extends Component {
                    this.setState({loading: false,data:products });}
                 })
                 .catch(error => {
-                    var message=JSON.stringify(error.response.data.error_message);
-                    if(message.includes("The Token has expired"))
-                    {
-                        this.setState({errorMessage:"Your token has expired"});
-                        this.errorHappend("Your token has expired.");
-                        authService.logout();
-                    }
-                    else
-                    {
-                        this.setState({errorMessage:error,loading: false})
+                    try {
+                        var message=JSON.stringify(error.response.data.error_message);
+                        if(message.includes("The Token has expired"))
+                        {
+                            this.setState({errorMessage:"Your token has expired"});
+                            this.errorHappend("Your token has expired.");
+                            authService.logout();
+                        }
+                    } 
+                    catch (error) {
+                        this.setState({errorMessage:error})
                     }
                     this.errorHappend("Product not found");
                     console.error('There was an error!', error);
@@ -204,6 +217,41 @@ class ProductsPage extends Component {
         }
        result = this.state.data.filter((item) => {return item.name.search(value) !== -1});
        this.setState({filteredData:result});
+    }
+    orderByPrice= (input) => {
+        let value = input.target.value.toLowerCase();
+        let result = [];
+        if(value===""||this.hasWhiteSpace(value))
+        {
+            result=this.state.data;
+            this.setState({filteredData:result});
+            return;
+        }
+       result = this.state.data.filter((item) => {return item.name.search(value) !== -1});
+       this.setState({filteredData:result});
+    }
+    sortProducts=(value)=>
+    {
+        let result = [];
+        var clone = this.state.data.slice(0);
+        switch (value) {
+            case "DESC_PRICE":
+                result = clone.sort((a, b) =>parseFloat(b.price) - parseFloat(a.price));
+                break;
+           case "ASC_PRICE":
+                result = clone.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+                break;
+           case "NameAZ":
+                result = clone.sort((a, b) => a.name.localeCompare(b.name))
+                break;
+           case "NameZA":
+            result = clone.sort((a, b) => b.name.localeCompare(a.name))
+                break;
+            default:
+                result=clone;
+                break;
+        }
+        this.setState({ filteredData:result }); 
     }
 
     render() {
@@ -265,7 +313,7 @@ class ProductsPage extends Component {
             };
         });
         
-        const { data, loading,filteredData} = this.state;
+        const { loading,filteredData} = this.state;
         if (this.state.errorMessage) {
             return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
                 <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
@@ -273,11 +321,19 @@ class ProductsPage extends Component {
                     <Button>Click here to login again</Button>
                 </Link>)}
             </Space>;
-        } else
+        }
+        else if(loading)
+        {
+            return <Spin/>
+        }
+        else
         {
         return (
             <Layout>
                 <div style={{marginBottom:"1em", marginTop:"1em"}}>
+                {/* <div  style={{float:"right"}}> */}
+               
+                   {/* </div> */}
                 <Button  style={{float:"left"}} onClick={this.exportToExcel}>Export to Excel</Button>
                     <Link to="/add-product">
                         <Button style={{float:"right", background: "#0AC035" }}
@@ -285,10 +341,51 @@ class ProductsPage extends Component {
                     </Link>
                 </div>
                 <Content>
+                <p style={{marginTop:"3px",marginRight:"5px",float:"left"}}>Sort products by: </p>
+                       <Select defaultValue={"DEFAULT"} mode="single" style={{ width: 150,float:"left" }}  onChange={this.sortProducts}>
+                           <Select.Option value="DEFAULT">Default</Select.Option>
+                           <Select.Option value="DESC_PRICE">Descending price</Select.Option>
+                           <Select.Option value="ASC_PRICE">Ascending price</Select.Option>
+                           <Select.Option value="NameAZ">Name A-Z</Select.Option>
+                           <Select.Option value="NameZA">Name Z-A</Select.Option>
+                       </Select>
                     <div style={{marginBottom:"1em"}}>
                         <Search placeholder="Search products by name"  onChange={this.onChange} />
                     </div>
-                    <Table components={components} bordered dataSource={filteredData} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>
+                    <Space direction="horizontal"  size={[8, 16]} wrap>
+      {filteredData.map(({id, name, model,color, price,photoBase64Info }) => (
+         <Card key={id} style={{ width: 240,marginBottom:"1em"}} loading={loading}
+         cover={<img alt="product_image_missing" src={photoBase64Info} style={{width:"10em", height:"10em"}}/>}
+         actions={[ 
+            <Link to={`${id}`}>
+                <EditOutlined key="edit" />,
+            </Link>,
+            <Popconfirm title='Are you sure you want to delete this product?' onConfirm={() => this.remove(id)}>
+                <DeleteOutlined key="delete" />,
+            </Popconfirm>,
+            
+         ]} >
+         <Card.Meta title={name}
+           description={
+            <Space direction="vertical">
+                <Space direction="horizontal">
+                    <Text >Model:</Text>
+                    <Text>{model}</Text>
+                </Space>
+                <Space direction="horizontal">
+                    <Text>Color:</Text>
+                    <Text>{color}</Text>
+                </Space>
+                <Space direction="horizontal">
+                    <Text>Price:</Text>
+                    <Text>{price}e</Text>
+                </Space>
+         </Space>
+        }/>
+       </Card>
+      ))}
+    </Space>
+                    {/* <Table components={components} bordered dataSource={filteredData} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/> */}
                 </Content>
             </Layout>
         );

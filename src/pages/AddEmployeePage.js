@@ -21,20 +21,17 @@ class AddEmployeePage extends Component {
                 this.successfullyAdded();
             })
             .catch(error => {
-                // this.setState({ errorMessage: error.message });
-                var message=JSON.stringify(error.response.data.error_message);
-                if(message===null){
-                if(message.includes("The Token has expired"))
-                {
-                    this.setState({errorMessage:"Your token has expired"});
-                    this.errorHappend("Your token has expired.");
-                    authService.logout();
-                }
-                else
-                {
-                    this.setState({errorMessage:error})
-                }
-            }
+                try {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
+                    }
+                } 
+                catch (error) {
+                    this.setState({errorMessage:error});}
                 this.errorHappend(error.response.data);
                 console.error('There was an error!', error);
             });

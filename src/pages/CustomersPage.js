@@ -1,13 +1,13 @@
 import React, {Component} from 'react';
 import API from "../server-apis/api";
-import {Button, Layout, notification, Popconfirm, Space, Table, Typography} from "antd";
+import {Button, Layout, notification, Popconfirm, Space, Spin, Table, Typography} from "antd";
 import {Content} from "antd/es/layout/layout";
 import EditableTableRow, {EditableContext} from "../components/EditableTableRow";
 import {customersDataColumns} from "../tableColumnsData/customersDataColumns";
 import EditableTableCell from "../components/EditableTableCell";
 import {Link} from "react-router-dom";
 import authService from "../services/auth.service";
-import {CheckCircleFilled, InfoCircleFilled, LoginOutlined} from "@ant-design/icons";
+import {CheckCircleFilled, InfoCircleFilled} from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
 import { downloadExcel } from "react-export-table-to-excel";
 
@@ -55,16 +55,17 @@ class CustomersPage extends Component {
                 this.setState({loading: false,data:customers });}
             })
             .catch((error)=>{
-                var message=JSON.stringify(error.response.data.error_message);
-                if(message.includes("The Token has expired"))
-                {
-                    this.setState({errorMessage:"Your token has expired"});
-                    this.errorHappend("Your token has expired.");
-                    authService.logout();
-                }
-                else
-                {
-                    this.setState({errorMessage:error,loading: false,data:null })
+                try {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
+                    }
+                } 
+                catch (error) {
+                    this.setState({errorMessage:error})
                 }
                 this.errorHappend(error);
                 console.error('There was an error!', error);
@@ -78,15 +79,16 @@ class CustomersPage extends Component {
                 this.successfullyAdded("Customer is deleted");
             })
             .catch((error)=>{
-                var message=JSON.stringify(error.response.data.error_message);
-                if(message.includes("The Token has expired"))
-                {
-                    this.setState({errorMessage:"Your token has expired"});
-                    this.errorHappend("Your token has expired.");
-                    authService.logout();
-                }
-                else
-                {
+                try {
+                    var message=JSON.stringify(error.response.data.error_message);
+                    if(message.includes("The Token has expired"))
+                    {
+                        this.setState({errorMessage:"Your token has expired"});
+                        this.errorHappend("Your token has expired.");
+                        authService.logout();
+                    }
+                } 
+                catch (error) {
                     this.setState({errorMessage:error})
                 }
                 this.errorHappend("Failed to delete");
@@ -111,15 +113,16 @@ class CustomersPage extends Component {
                     this.successfullyAdded("Customer is updated");
                 })
                 .catch(error => {
-                    var message=JSON.stringify(error.response.data.error_message);
-                    if(message.includes("The Token has expired"))
-                    {
-                        this.setState({errorMessage:"Your token has expired"});
-                        this.errorHappend("Your token has expired.");
-                        authService.logout();
-                    }
-                    else
-                    {
+                    try {
+                        var message=JSON.stringify(error.response.data.error_message);
+                        if(message.includes("The Token has expired"))
+                        {
+                            this.setState({errorMessage:"Your token has expired"});
+                            this.errorHappend("Your token has expired.");
+                            authService.logout();
+                        }
+                    } 
+                    catch (error) {
                         this.setState({errorMessage:error})
                     }
                     this.errorHappend("Failed to save");
@@ -162,7 +165,7 @@ class CustomersPage extends Component {
                 cell: EditableTableCell
             }
         };
-        
+        var rendered;
         const columns = customersDataColumns.map(col => {
             if (col.dataIndex === 'actions') {
                 return {
@@ -178,8 +181,8 @@ class CustomersPage extends Component {
                 </span>
                         ) : (
                             <Space size='middle'>
-                                <Typography.Link disabled={this.state.editingKey !== ''} onClick={() => this.edit(record.id)}>Edit</Typography.Link>
-                                <Popconfirm title='Are you sure you want to delete this customer?' onConfirm={() => this.remove(record.id)}>
+                                    <Typography.Link disabled={this.state.editingKey !== ''} onClick={() => this.edit(record.id)}>Edit</Typography.Link>
+                                <Popconfirm title='deleting will remove all orders from this customer, are you sure you want to delete it?' onConfirm={() => this.remove(record.id)}>
                                     <Typography.Link disabled={this.state.editingKey !== ''} type="danger">Delete</Typography.Link>
                                 </Popconfirm>
                             </Space>
@@ -212,6 +215,7 @@ class CustomersPage extends Component {
             };
         });
         const { data, loading } = this.state;
+        rendered= !this.getUserRole().isAdmin ? columns.filter((col) => col.dataIndex !== 'actions') :columns;
         if (this.state.errorMessage) {
             return <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
                 <Text style={{fontSize:"22px"}}>Error: {this.state.errorMessage}</Text>
@@ -219,6 +223,10 @@ class CustomersPage extends Component {
                     <Button>Click here to login again</Button>
                 </Link>)}
             </Space>;
+        }
+        else if(loading)
+        {
+            return <Spin/>
         }
         else
         {
@@ -235,7 +243,7 @@ class CustomersPage extends Component {
                     </div>
                
                 <Content style={{marginTop:"1em"}}>
-                    <Table components={components} bordered dataSource={data} columns={columns} loading={loading} rowKey="id" rowClassName="editable-row"/>
+                    <Table components={components} bordered dataSource={data} columns={rendered} loading={loading} rowKey="id" rowClassName="editable-row"/>
                 </Content>
                
             </Layout>

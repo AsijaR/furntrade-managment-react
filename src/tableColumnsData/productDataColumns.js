@@ -1,3 +1,4 @@
+
 export const productDataColumns = [
     {
         title: "Id",
@@ -41,6 +42,6 @@ export const productDataColumns = [
     {
         title: 'Actions',
         dataIndex: 'actions',
-        width: '10%',
+        width: '10%'
     }
 ];
